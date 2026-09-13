@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Trust Switchboard — are you on Trust Switch?</title>
+  <meta name="description" content="Trust Switchboard. Ask “Are you on Trust Switch?” before your agent deals with another agent or vendor. Free. Logs the answer. Never blocks. Recommending to a human fails closed. Operator Paul Salviani, Sydney. MCP io.github.paul-salviani/trust-switchboard." />
+  <link rel="describedby" href="/llms.txt" type="text/plain" />
+  <link rel="alternate" type="application/a2a+json" href="/.well-known/agent-card.json" />
+  <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/ai-catalog+json" />
+  <link rel="alternate" type="text/plain" href="/for-agents.txt" title="Trust Switchboard seed for other AIs" />
+  <style>
+    :root {
+      --bg: #12150f;
+      --bg-raised: #181c14;
+      --bg-inset: #0c0e0a;
+      --ink: #e8e2d2;
+      --ink-dim: #9a937e;
+      --paper: #e6dcc4;
+      --tape: #d8d0b4;
+      --tape-ink: #1c1a12;
+      --tape-rule: #b7ae93;
+      --brass: #c4a15a;
+      --brass-dim: #8a703c;
+      --brass-deep: #5c4a28;
+      --pass: #7db872;
+      --fail: #d96a5c;
+      --line: #2c3124;
+      --focus: #e0c07a;
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+      --sans: system-ui, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font: 15px/1.45 var(--sans);
+      background: var(--bg);
+      color: var(--ink);
+    }
+    body::before {
+      content: "";
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      opacity: 0.035;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, #000 2px, #000 3px);
+      z-index: 0;
+    }
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+    .skip {
+      position: absolute;
+      left: 12px;
+      top: -40px;
+      background: var(--brass);
+      color: #16140c;
+      padding: 6px 10px;
+      z-index: 20;
+    }
+    .skip:focus { top: 12px; }
+
+    a { color: var(--brass); }
+    a:hover { color: var(--paper); }
+    code, .mono, .hash, .rid, .stamp-n, .clock, .line-status, .tape-deck {
+      font-family: var(--mono);
+    }
+
+    .mast {
+      position: relative;
+      z-index: 1;
+      border-bottom: 1px solid var(--brass-deep);
+      background: var(--bg-raised);
+    }
+    .mast-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 22px 22px 16px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+      gap: 18px 28px;
+      align-items: end;
+    }
+    .mark {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 10px 14px;
+    }
+    .mark h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 650;
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+    .mark .role {
+      color: var(--brass);
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+    }
+    .lede {
+      margin: 8px 0 0;
+      max-width: 62ch;
+      color: var(--ink-dim);
+    }
+    .credo {
+      margin: 6px 0 0;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--brass-dim);
+    }
+    .mast-key label { margin-top: 0; }
+    .clock-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--ink-dim);
+      margin-bottom: 6px;
+      font-family: var(--mono);
+    }
+    .clock { color: var(--ink); }
+    .line-status[data-state="up"] { color: var(--pass); }
+    .line-status[data-state="down"] { color: var(--fail); }
+
+    .rail {
+      position: sticky;
+      top: 0;
+      z-index: 8;
+      background: #14180f;
+      border-bottom: 1px solid var(--line);
+    }
+    .rail-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 10px;
+      display: flex;
+      gap: 2px;
+      overflow-x: auto;
+    }
+    .rail a {
+      flex: 0 0 auto;
+      color: var(--ink-dim);
+      text-decoration: none;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 10px 12px;
+      border-bottom: 2px solid transparent;
+    }
+    .rail a:hover { color: var(--ink); }
+    .rail a.is-on {
+      color: var(--brass);
+      border-bottom-color: var(--brass);
+    }
+
+    .desk {
+      position: relative;
+      z-index: 1;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 8px 22px 32px;
+    }
+    .pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .bay {
+      padding: 22px 0 26px;
+      border-top: 1px solid var(--line);
+    }
+    .pair .bay + .bay { padding-left: 22px; }
+    .pair .bay:first-child { padding-right: 22px; border-right: 1px solid var(--line); }
+    .pair.split { border: 0; }
+    .bay.nested { border-top: 0; padding-top: 0; }
+
+    .bay-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 3px double var(--brass-deep);
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+    }
+    .bay-title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin: 0;
+      font-size: 13px;
+      font-weight: 650;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .bay-num {
+      font-family: var(--mono);
+      color: var(--brass);
+      letter-spacing: 0.08em;
+    }
+    .tool {
+      font-family: var(--mono);
+      color: var(--ink-dim);
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .bay-note {
+      margin: 0 0 14px;
+      color: var(--ink-dim);
+      max-width: 72ch;
+    }
+    .foot-note {
+      margin: 12px 0 0;
+      font-size: 12px;
+      color: var(--ink-dim);
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 4px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-dim);
+    }
+    input, textarea, select {
+      width: 100%;
+      background: var(--bg-inset);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 0;
+      padding: 9px 10px;
+      font: inherit;
+    }
+    textarea { min-height: 92px; resize: vertical; }
+    input::placeholder, textarea::placeholder { color: #6f6a58; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    button {
+      font: inherit;
+      font-weight: 650;
+      letter-spacing: 0.04em;
+      border: 1px solid var(--brass);
+      background: var(--brass);
+      color: #16140c;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-radius: 0;
+    }
+    button:hover { background: var(--focus); border-color: var(--focus); }
+    button:active { transform: translateY(1px); }
+    button.ghost {
+      background: transparent;
+      color: var(--brass);
+    }
+    button.ghost:hover { background: var(--brass-deep); color: var(--paper); }
+    button.deny {
+      background: transparent;
+      color: var(--fail);
+      border-color: var(--fail);
+    }
+    button.deny:hover { background: #3a1814; color: var(--paper); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .speak {
+      margin: 12px 0 0;
+      padding: 12px 14px 12px 16px;
+      border-left: 3px solid var(--brass);
+      background: var(--bg-inset);
+    }
+    .speak .kicker {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--brass);
+      margin-bottom: 4px;
+    }
+    .speak p {
+      margin: 0;
+      font-size: 1.12rem;
+      line-height: 1.35;
+    }
+    .speak.empty { display: none; }
+
+    .pill {
+      display: inline-block;
+      min-width: 4.5rem;
+      text-align: center;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      border: 1px solid currentColor;
+    }
+    .pill.pass { color: var(--pass); }
+    .pill.fail, .pill.unknown { color: var(--fail); }
+    .pill.wait { color: var(--ink-dim); }
+
+    .hash, .rid {
+      font-size: 12px;
+      word-break: break-all;
+      color: var(--ink);
+    }
+    .hash-block {
+      margin-top: 8px;
+      color: var(--ink-dim);
+      font-size: 12px;
+    }
+    .hash-block button { margin-top: 8px; }
+    .check-pill { margin-top: 12px; }
+    .follow { margin-top: 16px; }
+
+    .cards { display: grid; gap: 10px; margin-top: 14px; }
+    .card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px 16px;
+      padding: 14px;
+      background: var(--bg-raised);
+      border: 1px solid var(--line);
+    }
+    .card.is-low { opacity: 0.7; }
+    .card h3 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      font-weight: 650;
+    }
+    .card .meta { color: var(--ink-dim); font-size: 12px; }
+    .card .summary { margin: 8px 0 0; grid-column: 1 / -1; }
+    .card .speak { grid-column: 1 / -1; }
+    .card .card-actions { grid-column: 1 / -1; margin-top: 4px; }
+    .stamp {
+      border: 1px solid var(--brass);
+      min-width: 4.6rem;
+      text-align: center;
+      padding: 7px 8px 8px;
+      align-self: start;
+    }
+    .stamp-n {
+      display: block;
+      font-size: 1.35rem;
+      line-height: 1;
+      color: var(--brass);
+    }
+    .stamp-l {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.62rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-dim);
+    }
+    .unique-note {
+      grid-column: 1 / -1;
+      margin: 0;
+      font-size: 13px;
+      color: var(--ink-dim);
+    }
+    .honest {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border: 1px dashed var(--brass-dim);
+      color: var(--ink);
+      background: var(--bg-inset);
+    }
+    .err {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--fail);
+      color: var(--fail);
+      font-size: 13px;
+    }
+    .ok-line {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--pass);
+      color: var(--pass);
+      font-size: 13px;
+    }
+    .once {
+      margin-top: 12px;
+      padding: 14px;
+      background: #241e12;
+      border: 1px solid var(--brass);
+    }
+    .once strong { color: var(--brass); }
+    .once .rid { font-size: 14px; color: var(--paper); }
+
+    details.raw {
+      margin-top: 12px;
+      color: var(--ink-dim);
+      font-size: 12px;
+    }
+    details.raw summary { cursor: pointer; }
+    pre {
+      margin: 8px 0 0;
+      padding: 10px;
+      background: var(--bg-inset);
+      border: 1px solid var(--line);
+      overflow: auto;
+      font: 12px/1.4 var(--mono);
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--ink);
+    }
+
+    .tape-well {
+      background: var(--bg-inset);
+      border: 1px solid var(--line);
+      padding: 10px;
+    }
+    .tape-deck {
+      position: relative;
+      background: var(--tape);
+      color: var(--tape-ink);
+      padding: 14px 28px 16px;
+      min-height: 180px;
+      max-height: 520px;
+      overflow: auto;
+    }
+    .tape-deck::before,
+    .tape-deck::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 14px;
+      background-image: radial-gradient(circle, var(--bg-inset) 3px, transparent 3.4px);
+      background-size: 14px 16px;
+      background-repeat: repeat-y;
+      background-position: center 8px;
+      pointer-events: none;
+    }
+    .tape-deck::before { left: 3px; }
+    .tape-deck::after { right: 3px; }
+    .tape-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      border-bottom: 1px dashed var(--tape-rule);
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+    .trow {
+      display: grid;
+      grid-template-columns: 20ch 6ch minmax(0, 1fr);
+      gap: 8px 12px;
+      padding: 6px 0;
+      border-bottom: 1px dotted var(--tape-rule);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .trow .kind { letter-spacing: 0.08em; font-weight: 700; }
+    .trow .detail { word-break: break-word; }
+    .trow .sub { color: #4a4638; }
+    .trow .pass { color: #2d6a38; }
+    .trow .fail { color: #8a2e24; }
+    .cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .ledger-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border: 1px solid var(--line);
+    }
+    .ledger-list li {
+      padding: 8px 10px;
+      border-top: 1px solid var(--line);
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+    .ledger-list li:first-child { border-top: 0; }
+    .ledger-list .sub { display: block; color: var(--ink-dim); font-size: 11px; font-family: var(--sans); }
+    .hitl-list { display: grid; gap: 8px; margin-top: 8px; }
+    .hitl-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px 12px;
+      padding: 12px;
+      background: var(--bg-raised);
+      border: 1px solid var(--line);
+    }
+    .hitl-row .hitl-id { font-family: var(--mono); font-size: 13px; word-break: break-all; }
+    .hitl-row .sub { display: block; color: var(--ink-dim); font-size: 12px; margin-top: 4px; }
+    .hitl-row .actions { margin-top: 0; align-self: start; }
+    .disco {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 8px;
+    }
+    .disco a {
+      display: block;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      text-decoration: none;
+      font-family: var(--mono);
+      font-size: 13px;
+      background: var(--bg-raised);
+    }
+    .disco a:hover { border-color: var(--brass); }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 8px 22px 48px;
+      color: var(--ink-dim);
+      font-size: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    @media (max-width: 720px) {
+      .mast-inner,
+      .pair,
+      .cols,
+      .card,
+      .trow,
+      .hitl-row {
+        grid-template-columns: 1fr;
+      }
+      .pair .bay + .bay { padding-left: 0; }
+      .pair .bay:first-child { padding-right: 0; border-right: 0; }
+      .desk { padding: 8px 16px 28px; }
+      .mast-inner { padding: 18px 16px 14px; }
+      footer { padding: 8px 16px 40px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#desk">Skip to desk</a>
+  <header class="mast">
+    <div class="mast-inner">
+      <div>
+        <div class="mark">
+          <h1>Trust Switchboard</h1>
+          <span class="role">Are you on Trust Switch?</span>
+        </div>
+        <p class="lede">One free call before your agent deals with another agent, vendor, or URL: <code>handshake</code> asks “Are you on Trust Switch?”, records yes or no, and business proceeds — activation is off, nobody is blocked. Recommending to a human is the stricter question: <code>trust_check</code> fails closed. Empty list is honest. Operator Paul Salviani, Sydney. Always-approve is fine; people who look see the hash and the receipt.</p>
+        <p class="credo">Code is copyable · the log is the company</p>
+      </div>
+      <div class="mast-key">
+        <div class="clock-row">
+          <time class="clock" id="clock" datetime="">—</time>
+          <span class="line-status" id="line" data-state="">line …</span>
+        </div>
+        <label for="op-key">Operator write key</label>
+        <input id="op-key" name="op-key" type="password" autocomplete="off" spellcheck="false" placeholder="operator write key from the terminal" />
+      </div>
+    </div>
+  </header>
+  <nav class="rail" aria-label="Bays">
+    <div class="rail-inner">
+      <a href="#need">01 Need</a>
+      <a href="#check">02 Check</a>
+      <a href="#commit">03 Commit</a>
+      <a href="#receipt">04 Receipt</a>
+      <a href="#click">05 Click</a>
+      <a href="#publish">06 Publish</a>
+      <a href="#list">07 List</a>
+      <a href="#demand">08 Demand</a>
+      <a href="#spend">11 Spend</a>
+      <a href="#nutrition">12 Nutrition</a>
+      <a href="#hitl">13 HITL</a>
+      <a href="#tape">09 Tape</a>
+      <a href="#discovery">10 Discovery</a>
+    </div>
+  </nav>
+  <main id="desk" class="desk">
+    <section id="need" class="bay" aria-labelledby="need-h">
+      <div class="bay-head">
+        <h2 class="bay-title" id="need-h"><span class="bay-num">01</span> Need</h2>
+        <span class="tool">whats_good_for</span>
+      </div>
+      <p class="bay-note">Attested only. Unique within the pond first. Empty is honest. Nothing invented. No votes, no “best”.</p>
+      <form id="form-need">
+        <label for="need-q">What is the need</label>
+        <input id="need-q" name="query" maxlength="500" placeholder="new MCP tool for PDFs" />
+        <div class="actions">
+          <button type="submit">Ask the switchboard</button>
+        </div>
+      </form>
+      <div id="need-speak" class="speak empty" aria-live="polite"></div>
+      <div id="need-cards" class="cards" aria-live="polite"></div>
+      <p id="need-empty" class="honest" hidden></p>
+      <p id="need-err" class="err" hidden></p>
+      <details class="raw"><summary>Raw</summary><pre id="need-raw">{}</pre></details>
+    </section>
+
+    <div class="pair">
+      <section id="check" class="bay" aria-labelledby="check-h">
+        <div class="bay-head">
+          <h2 class="bay-title" id="check-h"><span class="bay-num">02</span> Check</h2>
+          <span class="tool">trust_check</span>
+        </div>
+        <p class="bay-note">Pass or fail against a live policy. The hash is of the policy body, not the URL.</p>
+        <form id="form-check">
+          <label for="check-url">URL</label>
+          <input id="check-url" name="url" type="url" inputmode="url" spellcheck="false" placeholder="https://the-url-to-check" />
+          <div class="actions">
+            <button type="submit">Check</button>
+          </div>
+        </form>
+        <div id="check-pill" class="check-pill"></div>
+        <div id="check-speak" class="speak empty" aria-live="polite"></div>
+        <div id="check-hash" class="hash-block"></div>
+        <p class="foot-note">Fixtures exist so smoke is not empty. <span class="mono">northsidedental.example</span> may pass and is not recommendable. Seed orgs are not the catalogue.</p>
+        <p id="check-err" class="err" hidden></p>
+        <details class="raw"><summary>Raw</summary><pre id="check-raw">{}</pre></details>
+      </section>
+
+      <section id="commit" class="bay" aria-labelledby="commit-h">
+        <div class="bay-head">
+          <h2 class="bay-title" id="commit-h"><span class="bay-num">03</span> Commit recommend</h2>
+          <span class="tool">commit_recommend</span>
+        </div>
+        <p class="bay-note">Keyed. Writes the recommend on the tape. Other AIs must say the speak string. People who look see hash and receipt.</p>
+        <form id="form-commit">
+          <label for="commit-q">Query</label>
+          <input id="commit-q" name="query" placeholder="what the human asked" />
+          <label for="commit-url">Target URL</label>
+          <input id="commit-url" name="target_url" type="url" inputmode="url" spellcheck="false" placeholder="https://" />
+          <label for="commit-pid">Policy id (optional)</label>
+          <input id="commit-pid" name="policy_id" spellcheck="false" class="mono" />
+          <div class="actions">
+            <button type="submit">Commit recommend</button>
+          </div>
+        </form>
+        <div id="commit-speak" class="speak empty" aria-live="polite"></div>
+        <div id="commit-rcp" class="hash-block"></div>
+        <p id="commit-err" class="err" hidden></p>
+        <details class="raw"><summary>Raw</summary><pre id="commit-raw">{}</pre></details>
+      </section>
+    </div>
+
+    <div class="pair">
+      <section id="receipt" class="bay" aria-labelledby="receipt-h">
+        <div class="bay-head">
+          <h2 class="bay-title" id="receipt-h"><span class="bay-num">04</span> Receipt</h2>
+          <span class="tool">log_intent · GET /receipts/{id}</span>
+        </div>
+        <p class="bay-note">Keyed write. Then fetch the slip. The receipt is the tape, not a trophy.</p>
+        <form id="form-log">
+          <label for="log-q">Query</label>
+          <input id="log-q" name="query" />
+          <label for="log-action">Action</label>
+          <select id="log-action" name="action">
+            <option value="recommend" selected>recommend</option>
+            <option value="call">call</option>
+            <option value="pay">pay</option>
+            <option value="other">other</option>
+          </select>
+          <label for="log-url">Target URL</label>
+          <input id="log-url" name="target_url" type="url" inputmode="url" spellcheck="false" placeholder="https://" />
+          <label for="log-pid">Policy id</label>
+          <input id="log-pid" name="policy_id" spellcheck="false" class="mono" />
+          <div class="actions">
+            <button type="submit">Write receipt</button>
+          </div>
+        </form>
+        <div id="log-rcp" class="hash-block"></div>
+        <form id="form-fetch" class="follow">
+          <label for="rcp-id">Receipt id</label>
+          <input id="rcp-id" name="receipt_id" spellcheck="false" class="mono" placeholder="rcp_…" />
+          <div class="actions">
+            <button type="submit" class="ghost">Fetch receipt</button>
+          </div>
+        </form>
+        <div id="rcp-view"></div>
+        <p id="receipt-err" class="err" hidden></p>
+        <details class="raw"><summary>Raw</summary><pre id="receipt-raw">{}</pre></details>
+      </section>
+
+      <section id="click" class="bay" aria-labelledby="click-h">
+        <div class="bay-head">
+          <h2 class="bay-title" id="click-h"><span class="bay-num">05</span> Click</h2>
+          <span class="tool">POST /clicks</span>
+        </div>
+        <p class="bay-note">After a receipt. A human or always-approve agent followed the URL. That click is tape.</p>
+        <form id="form-click">
+          <label for="click-url">Item URL</label>
+          <input id="click-url" name="item_url" type="url" inputmode="url" spellcheck="false" placeholder="https://" />
+          <label for="click-rcp">Receipt id</label>
+          <input id="click-rcp" name="receipt_id" spellcheck="false" class="mono" placeholder="rcp_…" />
+          <div class="actions">
+            <button type="submit">Record click</button>
+          </div>
+        </form>
+        <div id="click-out" class="hash-block"></div>
+        <p id="click-err" class="err" hidden></p>
+        <details class="raw"><summary>Raw</summary><pre id="click-raw">{}</pre></details>
+      </section>
+    </div>
+
+    <section id="publish" class="bay" aria-labelledby="publish-h">
+      <div class="bay-head">
+        <h2 class="bay-title" id="publish-h"><span class="bay-num">06</span> Publish</h2>
+        <span class="tool">POST /orgs · POST /orgs/policy</span>
+      </div>
+      <p class="bay-note">Create the org, then publish the policy. The publish key is shown once. Store it; we keep only the hash.</p>
+      <div class="pair split">
+        <form id="form-signup" class="bay nested">
+          <label for="org-name">Name</label>
+          <input id="org-name" name="name" />
+          <label for="org-site">Site URL</label>
+          <input id="org-site" name="site_url" type="url" inputmode="url" spellcheck="false" placeholder="https://" />
+          <label for="org-cat">Category</label>
+          <input id="org-cat" name="category" placeholder="ai-tools" />
+          <div class="actions">
+            <button type="submit">Create org</button>
+          </div>
+        </form>
+        <form id="form-policy" class="bay nested">
+          <label for="org-key">Org publish key</label>
+          <input id="org-key" name="org-key" type="password" autocomplete="off" spellcheck="false" placeholder="shown once at signup" />
+          <label for="pol-stores">Stores what</label>
+          <input id="pol-stores" name="stores_what" />
+          <label for="pol-region">Data region</label>
+          <input id="pol-region" name="data_region" placeholder="AU" />
+          <label for="pol-email">Dispute email</label>
+          <input id="pol-email" name="dispute_email" type="email" />
+          <label for="pol-title">Title</label>
+          <input id="pol-title" name="title" />
+          <label for="pol-sum">Summary</label>
+          <input id="pol-sum" name="summary" />
+          <label for="pol-body">Body</label>
+          <textarea id="pol-body" name="body" rows="5"></textarea>
+          <div class="actions">
+            <button type="submit">Publish policy</button>
+          </div>
+        </form>
+      </div>
+      <div id="pub-once" hidden></div>
+      <div id="pub-hash" class="hash-block"></div>
+      <p id="publish-err" class="err" hidden></p>
+      <details class="raw"><summary>Raw</summary><pre id="publish-raw">{}</pre></details>
+    </section>
+
+    <div class="pair">
+      <section id="list" class="bay" aria-labelledby="list-h">
+        <div class="bay-head">
+          <h2 class="bay-title" id="list-h"><span class="bay-num">07</span> List something unique</h2>
+          <span class="tool">POST /listings</span>
+        </div>
+        <p class="bay-note">Keyed ingest into one pond. Uniqueness is versus peers in that pond, not the whole internet.</p>
+        <form id="form-list">
+          <label for="lst-name">Name</label>
+          <input id="lst-name" name="name" />
+          <label for="lst-url">URL</label>
+          <input id="lst-url" name="url" type="url" inputmode="url" spellcheck="false" placeholder="https://" />
+          <label for="lst-one">One liner</label>
+          <input id="lst-one" name="one_liner" />
+          <label for="lst-pond">Pond</label>
+          <input id="lst-pond" name="pond" value="ai-tools" />
+          <div class="actions">
+            <button type="submit">List in pond</button>
+          </div>
+        </form>
+        <div id="list-out"></div>
+        <p id="list-err" class="err" hidden></p>
+        <details class="raw"><summary>Raw</summary><pre id="list-raw">{}</pre></details>
+      </section>
+
+      <section id="demand" class="bay" aria-labelledby="demand-h">
+        <div class="bay-head">
+          <h2 class="bay-title" id="demand-h"><span class="bay-num">08</span> Demand</h2>
+          <button type="button" class="ghost" id="btn-demand">Reload demand</button>
+        </div>
+        <p class="bay-note">Refuses and empty needs. Failed domains and missing queries are the waiting list, not a ranking.</p>
+        <div class="cols">
+          <div>
+            <label>Failed domains</label>
+            <ul id="demand-fail" class="ledger-list"></ul>
+          </div>
+          <div>
+            <label>Missing queries</label>
+            <ul id="demand-miss" class="ledger-list"></ul>
+          </div>
+        </div>
+        <p id="demand-err" class="err" hidden></p>
+        <details class="raw"><summary>Raw</summary><pre id="demand-raw">{}</pre></details>
+      </section>
+    </div>
+
+    <div class="pair">
+      <section id="spend" class="bay" aria-labelledby="spend-h">
+        <div class="bay-head">
+          <h2 class="bay-title" id="spend-h"><span class="bay-num">11</span> Spend check</h2>
+          <span class="tool">POST /tools/spend_check</span>
+        </div>
+        <p class="bay-note">Hard limit plus allowlist. The model cannot talk itself out of the cap. Uses the operator write key on this page. No key is baked in.</p>
+        <form id="form-spend">
+          <label for="spend-url">URL</label>
+          <input id="spend-url" name="url" type="url" inputmode="url" spellcheck="false" placeholder="https://" />
+          <label for="spend-amt">Amount</label>
+          <input id="spend-amt" name="amount" inputmode="decimal" spellcheck="false" placeholder="0.00" />
+          <label for="spend-action">Action</label>
+          <select id="spend-action" name="action">
+            <option value="pay" selected>pay</option>
+            <option value="call">call</option>
+            <option value="recommend">recommend</option>
+            <option value="other">other</option>
+          </select>
+          <div class="actions">
+            <button type="submit">Check spend</button>
+          </div>
+        </form>
+        <div id="spend-pill" class="check-pill"></div>
+        <div id="spend-speak" class="speak empty" aria-live="polite"></div>
+        <div id="spend-out" class="hash-block"></div>
+        <p id="spend-err" class="err" hidden></p>
+        <details class="raw"><summary>Raw</summary><pre id="spend-raw">{}</pre></details>
+      </section>
+
+      <section id="nutrition" class="bay" aria-labelledby="nut-h">
+        <div class="bay-head">
+          <h2 class="bay-title" id="nut-h"><span class="bay-num">12</span> Nutrition</h2>
+          <span class="tool">GET /nutrition?url=</span>
+        </div>
+        <p class="bay-note">Stamp of what the agent is and when it was last tested. Not a catalogue. Not a recommend.</p>
+        <form id="form-nut">
+          <label for="nut-url">URL</label>
+          <input id="nut-url" name="url" type="url" inputmode="url" spellcheck="false" placeholder="https://" />
+          <div class="actions">
+            <button type="submit">Fetch stamp</button>
+          </div>
+        </form>
+        <div id="nut-pill" class="check-pill"></div>
+        <div id="nut-out"></div>
+        <p id="nut-err" class="err" hidden></p>
+        <details class="raw"><summary>Raw</summary><pre id="nut-raw">{}</pre></details>
+      </section>
+    </div>
+
+    <section id="hitl" class="bay" aria-labelledby="hitl-h">
+      <div class="bay-head">
+        <h2 class="bay-title" id="hitl-h"><span class="bay-num">13</span> HITL tap</h2>
+        <span class="tool">request_approve · GET /pending · POST /approve</span>
+      </div>
+      <p class="bay-note">Agent pauses. Human taps yes or deny. Always-approve is fine; a deny is a deny. Uses the operator write key already on this page.</p>
+      <div class="pair split">
+        <form id="form-hitl" class="bay nested">
+          <label for="hitl-url">URL</label>
+          <input id="hitl-url" name="url" type="url" inputmode="url" spellcheck="false" placeholder="https://" />
+          <label for="hitl-amt">Amount (optional)</label>
+          <input id="hitl-amt" name="amount" inputmode="decimal" spellcheck="false" placeholder="0.00" />
+          <label for="hitl-action">Action</label>
+          <select id="hitl-action" name="action">
+            <option value="pay" selected>pay</option>
+            <option value="call">call</option>
+            <option value="recommend">recommend</option>
+            <option value="other">other</option>
+          </select>
+          <label for="hitl-reason">Reason</label>
+          <input id="hitl-reason" name="reason" placeholder="what the agent wants to do" />
+          <div class="actions">
+            <button type="submit">Request approve</button>
+          </div>
+        </form>
+        <div class="bay nested">
+          <div class="bay-head">
+            <h3 class="bay-title">Pending</h3>
+            <button type="button" class="ghost" id="btn-pending">Reload pending</button>
+          </div>
+          <p class="foot-note" id="hitl-count"></p>
+          <div id="hitl-list" class="hitl-list" aria-live="polite"></div>
+        </div>
+      </div>
+      <div id="hitl-out" class="hash-block"></div>
+      <p id="hitl-err" class="err" hidden></p>
+      <details class="raw"><summary>Raw</summary><pre id="hitl-raw">{}</pre></details>
+    </section>
+
+    <section id="tape" class="bay" aria-labelledby="tape-h">
+      <div class="bay-head">
+        <h2 class="bay-title" id="tape-h"><span class="bay-num">09</span> Tape</h2>
+        <button type="button" class="ghost" id="btn-tape">Reload tape</button>
+      </div>
+      <p class="bay-note">Recent checks, receipts, clicks, and searches. The log is the company. Not a dashboard toy.</p>
+      <div class="tape-well">
+        <div class="tape-deck" id="tape-deck" aria-live="polite">
+          <div class="tape-head">
+            <span>Trust Switchboard tape</span>
+            <span id="tape-meta">the log is the company</span>
+          </div>
+          <div id="tape-rows"></div>
+        </div>
+      </div>
+      <p id="tape-err" class="err" hidden></p>
+      <details class="raw"><summary>Raw</summary><pre id="tape-raw">{}</pre></details>
+    </section>
+
+    <section id="discovery" class="bay" aria-labelledby="disco-h">
+      <div class="bay-head">
+        <h2 class="bay-title" id="disco-h"><span class="bay-num">10</span> Discovery</h2>
+      </div>
+      <p class="bay-note">How other AIs find this desk. Card, llms, OpenAPI, health, MCP, directory.</p>
+      <div class="disco">
+        <a href="/.well-known/agent-card.json">/.well-known/agent-card.json</a>
+        <a href="/dash">/dash</a>
+        <a href="/for-agents">/for-agents</a>
+        <a href="/llms.txt">/llms.txt</a>
+        <a href="/llms-full.txt">/llms-full.txt</a>
+        <a href="/openapi.json">/openapi.json</a>
+        <a href="/health">/health</a>
+        <a href="/mcp/tools">/mcp/tools</a>
+        <a href="/directory">/directory</a>
+      </div>
+    </section>
+  </main>
+  <footer>
+    Pass means a live policy hash is on file. Not medical, legal, or financial advice.
+    Always-approve is fine; people who look see the hash and the receipt.
+    Incomplete input is on the caller. Database is private.
+  </footer>
+  <noscript>
+    <p class="err">This desk needs JavaScript to call the switchboard. Discovery links above still work.</p>
+  </noscript>
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      const opKey = () => ($("op-key").value || "").trim();
+      const orgKey = () => ($("org-key").value || "").trim();
+
+      function h(tag, props, ...kids) {
+        const n = document.createElement(tag);
+        if (props) {
+          for (const [k, v] of Object.entries(props)) {
+            if (v == null || v === false) continue;
+            if (k === "class") n.className = v;
+            else if (k === "text") n.textContent = String(v);
+            else if (k === "dataset") Object.assign(n.dataset, v);
+            else if (k.slice(0, 2) === "on" && typeof v === "function") n.addEventListener(k.slice(2), v);
+            else n.setAttribute(k, v === true ? "" : String(v));
+          }
+        }
+        for (const c of kids.flat()) {
+          if (c == null || c === false) continue;
+          n.append(c.nodeType ? c : document.createTextNode(String(c)));
+        }
+        return n;
+      }
+
+      function setRaw(id, obj) {
+        $(id).textContent = JSON.stringify(obj, null, 2);
+      }
+      function showErr(id, msg) {
+        const el = $(id);
+        if (!msg) { el.hidden = true; el.textContent = ""; return; }
+        el.hidden = false;
+        el.textContent = msg;
+      }
+      function setSpeak(id, text) {
+        const el = $(id);
+        el.replaceChildren();
+        if (!text) { el.classList.add("empty"); return; }
+        el.classList.remove("empty");
+        el.append(
+          h("span", { class: "kicker", text: "Speak — what other AIs must say" }),
+          h("p", { text: text })
+        );
+      }
+      function hrefOk(u) {
+        try {
+          const x = new URL(u, window.location.origin);
+          return x.protocol === "http:" || x.protocol === "https:";
+        } catch {
+          return false;
+        }
+      }
+      function pick(obj, keys) {
+        if (!obj || typeof obj !== "object") return null;
+        for (const k of keys) if (obj[k] != null && obj[k] !== "") return obj[k];
+        return null;
+      }
+      function asList(x) {
+        return Array.isArray(x) ? x : [];
+      }
+      function copyBtn(label, value) {
+        const b = h("button", { type: "button", class: "ghost", text: label });
+        b.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(value);
+            b.textContent = "Copied";
+            setTimeout(() => { b.textContent = label; }, 1200);
+          } catch {
+            b.textContent = "Copy failed";
+            setTimeout(() => { b.textContent = label; }, 1200);
+          }
+        });
+        return b;
+      }
+
+      async function api(path, opts) {
+        const o = opts || {};
+        const headers = { Accept: "application/json" };
+        if (o.body !== undefined) headers["Content-Type"] = "application/json";
+        if (o.key) headers["X-API-Key"] = o.key;
+        let res;
+        try {
+          res = await fetch(path, {
+            method: o.method || "GET",
+            headers,
+            body: o.body !== undefined ? JSON.stringify(o.body) : undefined,
+          });
+        } catch (e) {
+          return { ok: false, status: 0, data: { error: String(e && e.message ? e.message : e) } };
+        }
+        const text = await res.text();
+        let data;
+        try { data = text ? JSON.parse(text) : {}; }
+        catch { data = { error: "non-json", raw: text.slice(0, 800) }; }
+        return { ok: res.ok, status: res.status, data };
+      }
+
+      function errLine(r) {
+        const d = r.data || {};
+        const msg = d.error || d.message || d.detail || (r.ok ? "" : "request failed");
+        return (r.status ? r.status + " · " : "") + (msg || JSON.stringify(d));
+      }
+
+      function speakPass(name, hash, receipt) {
+        const n = name || "this organisation";
+        const bits = ["Use " + n + "."];
+        if (hash) bits.push("Policy hash " + hash + ".");
+        if (receipt) bits.push("Receipt " + receipt + ".");
+        return bits.join(" ");
+      }
+      const SPEAK_FAIL = "I can't recommend that yet. They have no live policy on the switchboard.";
+
+      function speakFromCheck(j) {
+        if (j && j.speak) return j.speak;
+        const result = String((j && (j.result != null ? j.result : j.pass === true ? "pass" : j.pass === false ? "fail" : "")) || "").toLowerCase();
+        if (result === "pass") {
+          const name = pick(j.org || {}, ["name", "domain"]) || pick(j, ["name", "org_name"]);
+          return speakPass(name, j.policy_hash, j.receipt_id);
+        }
+        if (result === "fail" || result === "unknown" || result === "") return SPEAK_FAIL;
+        return null;
+      }
+
+      function speakFromItem(m) {
+        if (m && m.speak) return m.speak;
+        const name = (m && m.name) || "this organisation";
+        return speakPass(name, m && m.policy_hash, m && m.receipt_id);
+      }
+
+      function fillFlow(parts) {
+        if (parts.url) {
+          $("check-url").value = parts.url;
+          $("commit-url").value = parts.url;
+          $("log-url").value = parts.url;
+          $("click-url").value = parts.url;
+          if ($("spend-url")) $("spend-url").value = parts.url;
+          if ($("nut-url")) $("nut-url").value = parts.url;
+          if ($("hitl-url")) $("hitl-url").value = parts.url;
+        }
+        if (parts.query) {
+          $("commit-q").value = parts.query;
+          $("log-q").value = parts.query;
+        }
+        if (parts.policy_id) {
+          $("commit-pid").value = parts.policy_id;
+          $("log-pid").value = parts.policy_id;
+        }
+        if (parts.receipt_id) {
+          $("rcp-id").value = parts.receipt_id;
+          $("click-rcp").value = parts.receipt_id;
+        }
+      }
+
+      function renderNeed(j) {
+        const box = $("need-cards");
+        const empty = $("need-empty");
+        box.replaceChildren();
+        empty.hidden = true;
+        empty.textContent = "";
+        const matches = asList(j.matches || j.items);
+        if (!matches.length) {
+          empty.hidden = false;
+          empty.textContent = j.note || "No attested listing matched those terms. Nothing invented.";
+          setSpeak("need-speak", "");
+          return;
+        }
+        setSpeak("need-speak", "");
+        matches.forEach((m) => {
+          const scoreNum = m.unique_score == null || m.unique_score === "" ? null : Number(m.unique_score);
+          const n = scoreNum == null || Number.isNaN(scoreNum) ? "—" : String(scoreNum);
+          const low = scoreNum != null && !Number.isNaN(scoreNum) && scoreNum < 40;
+          const site = m.website || m.url || "";
+          const speak = speakFromItem(m);
+          const card = h("article", { class: "card" + (low ? " is-low" : "") });
+          const main = h("div");
+          main.append(h("h3", { text: m.name || m.id || "untitled" }));
+          const metaBits = [m.pond || m.category, site].filter(Boolean).join(" · ");
+          main.append(h("div", { class: "meta", text: metaBits }));
+          card.append(main);
+          card.append(
+            h("div", { class: "stamp", "aria-label": "unique score " + n },
+              h("span", { class: "stamp-n", text: n }),
+              h("span", { class: "stamp-l", text: "unique" })
+            )
+          );
+          if (m.unique_note) card.append(h("p", { class: "unique-note", text: m.unique_note }));
+          if (m.summary || m.one_liner) card.append(h("p", { class: "summary", text: m.summary || m.one_liner }));
+          if (m.policy_hash) {
+            card.append(h("div", { class: "hash", text: (m.policy_id ? m.policy_id + " · " : "") + m.policy_hash }));
+          }
+          const sp = h("div", { class: "speak" });
+          sp.append(
+            h("span", { class: "kicker", text: "Speak" }),
+            h("p", { text: speak })
+          );
+          card.append(sp);
+          const acts = h("div", { class: "card-actions actions" });
+          if (site && hrefOk(site)) {
+            acts.append(h("a", { href: site, rel: "noopener noreferrer", text: site }));
+            const chk = h("button", { type: "button", class: "ghost", text: "Check this URL" });
+            chk.addEventListener("click", () => {
+              fillFlow({ url: site, query: $("need-q").value, policy_id: m.policy_id || "" });
+              $("check").scrollIntoView({ behavior: "smooth" });
+            });
+            const cmt = h("button", { type: "button", class: "ghost", text: "Route to commit" });
+            cmt.addEventListener("click", () => {
+              fillFlow({ url: site, query: $("need-q").value, policy_id: m.policy_id || "" });
+              $("commit").scrollIntoView({ behavior: "smooth" });
+            });
+            acts.append(chk, cmt);
+          }
+          card.append(acts);
+          box.append(card);
+        });
+        if (j.note) box.append(h("p", { class: "foot-note", text: j.note }));
+      }
+
+      $("form-need").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        showErr("need-err", "");
+        const query = $("need-q").value;
+        const r = await api("/tools/whats_good_for", { method: "POST", body: { query } });
+        setRaw("need-raw", r.data);
+        if (!r.ok) { showErr("need-err", errLine(r)); $("need-cards").replaceChildren(); return; }
+        renderNeed(r.data);
+      });
+
+      $("form-check").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        showErr("check-err", "");
+        const url = $("check-url").value;
+        const r = await api("/tools/trust_check", { method: "POST", body: { url } });
+        setRaw("check-raw", r.data);
+        const j = r.data || {};
+        let result = "";
+        if (j.result) result = String(j.result).toLowerCase();
+        else if (j.pass === true) result = "pass";
+        else if (j.pass === false) result = "fail";
+        const pill = $("check-pill");
+        pill.replaceChildren();
+        if (result) pill.append(h("span", { class: "pill " + (result === "pass" ? "pass" : "fail"), text: result }));
+        setSpeak("check-speak", r.ok ? speakFromCheck(j) : "");
+        const hb = $("check-hash");
+        hb.replaceChildren();
+        if (j.policy_hash) {
+          hb.append(
+            h("div", { text: "Policy hash" }),
+            h("div", { class: "hash", text: j.policy_hash }),
+            copyBtn("Copy hash", j.policy_hash)
+          );
+        }
+        if (j.policy_summary || j.summary) {
+          hb.append(h("p", { class: "foot-note", text: j.policy_summary || j.summary }));
+        }
+        if (j.org && j.org.name) {
+          hb.append(h("p", { class: "foot-note", text: j.org.name + (j.org.website ? " · " + j.org.website : "") }));
+        }
+        if (!r.ok) showErr("check-err", errLine(r));
+        fillFlow({
+          url: j.url || url,
+          policy_id: j.policy_id || "",
+        });
+      });
+
+      $("form-commit").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        showErr("commit-err", "");
+        const body = {
+          query: $("commit-q").value,
+          target_url: $("commit-url").value,
+        };
+        if ($("commit-pid").value) body.policy_id = $("commit-pid").value;
+        const r = await api("/tools/commit_recommend", { method: "POST", body, key: opKey() });
+        setRaw("commit-raw", r.data);
+        const j = r.data || {};
+        const speak = j.speak || (r.ok && (j.receipt_id || j.policy_hash)
+          ? speakPass(j.name || body.target_url, j.policy_hash, j.receipt_id)
+          : "");
+        setSpeak("commit-speak", speak);
+        const box = $("commit-rcp");
+        box.replaceChildren();
+        if (j.receipt_id) {
+          box.append(
+            h("div", { text: "Receipt" }),
+            h("div", { class: "rid", text: j.receipt_id }),
+            copyBtn("Copy receipt", j.receipt_id)
+          );
+          fillFlow({ receipt_id: j.receipt_id, url: body.target_url, query: body.query, policy_id: body.policy_id });
+        }
+        if (!r.ok) showErr("commit-err", errLine(r));
+      });
+
+      $("form-log").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        showErr("receipt-err", "");
+        const body = {
+          query: $("log-q").value,
+          action: $("log-action").value,
+          target_url: $("log-url").value,
+        };
+        if ($("log-pid").value) body.policy_id = $("log-pid").value;
+        const r = await api("/tools/log_intent", { method: "POST", body, key: opKey() });
+        setRaw("receipt-raw", r.data);
+        const j = r.data || {};
+        const box = $("log-rcp");
+        box.replaceChildren();
+        if (j.receipt_id) {
+          box.append(
+            h("div", { text: "Receipt" }),
+            h("div", { class: "rid", text: j.receipt_id }),
+            copyBtn("Copy receipt", j.receipt_id)
+          );
+          fillFlow({ receipt_id: j.receipt_id, url: body.target_url, query: body.query, policy_id: body.policy_id });
+        }
+        if (!r.ok) showErr("receipt-err", errLine(r));
+      });
+
+      $("form-fetch").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        showErr("receipt-err", "");
+        const id = ($("rcp-id").value || "").trim();
+        if (!id) { showErr("receipt-err", "Need a receipt id."); return; }
+        const r = await api("/receipts/" + encodeURIComponent(id));
+        setRaw("receipt-raw", r.data);
+        const view = $("rcp-view");
+        view.replaceChildren();
+        if (!r.ok) { showErr("receipt-err", errLine(r)); return; }
+        const j = r.data || {};
+        const dl = h("div", { class: "hash-block" });
+        ["id", "receipt_id", "query", "action", "target_url", "policy_id", "result", "created_at", "stored_at"].forEach((k) => {
+          const v = j[k] != null ? j[k] : (k === "id" ? j.receipt_id : null);
+          if (v == null || v === "") return;
+          dl.append(h("div", { text: k }), h("div", { class: "mono", text: String(v) }));
+        });
+        view.append(dl);
+      });
+
+      $("form-click").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        showErr("click-err", "");
+        const body = {
+          item_url: $("click-url").value,
+          receipt_id: $("click-rcp").value,
+        };
+        const r = await api("/clicks", { method: "POST", body, key: opKey() });
+        setRaw("click-raw", r.data);
+        const box = $("click-out");
+        box.replaceChildren();
+        const j = r.data || {};
+        const cid = pick(j, ["id", "click_id"]);
+        if (cid) box.append(h("div", { text: "Click" }), h("div", { class: "rid", text: cid }));
+        else if (r.ok) box.append(h("div", { text: "Recorded." }));
+        if (!r.ok) showErr("click-err", errLine(r));
+      });
+
+      $("form-signup").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        showErr("publish-err", "");
+        const body = {
+          name: $("org-name").value,
+          site_url: $("org-site").value,
+          category: $("org-cat").value,
+        };
+        const r = await api("/orgs", { method: "POST", body });
+        setRaw("publish-raw", r.data);
+        const j = r.data || {};
+        const once = $("pub-once");
+        once.hidden = true;
+        once.replaceChildren();
+        const key = pick(j, ["publish_key", "org_key", "api_key", "key"]);
+        if (key) {
+          once.hidden = false;
+          once.className = "once";
+          once.append(
+            h("strong", { text: "Store this. We keep only the hash." }),
+            h("p", { class: "foot-note", text: "Shown once. Paste it into the org publish key field now." }),
+            h("div", { class: "rid", text: String(key) }),
+            copyBtn("Copy publish key", String(key))
+          );
+          $("org-key").value = String(key);
+        }
+        if (j.org_id || j.id) {
+          $("pub-hash").replaceChildren(h("div", { text: "Org id" }), h("div", { class: "mono", text: j.org_id || j.id }));
+        }
+        if (!r.ok) showErr("publish-err", errLine(r));
+      });
+
+      $("form-policy").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        showErr("publish-err", "");
+        const body = {
+          stores_what: $("pol-stores").value,
+          data_region: $("pol-region").value,
+          dispute_email: $("pol-email").value,
+          title: $("pol-title").value,
+          summary: $("pol-sum").value,
+          body: $("pol-body").value,
+        };
+        const r = await api("/orgs/policy", { method: "POST", body, key: orgKey() });
+        setRaw("publish-raw", r.data);
+        const j = r.data || {};
+        const box = $("pub-hash");
+        box.replaceChildren();
+        if (j.policy_hash) {
+          box.append(
+            h("div", { text: "Policy hash" }),
+            h("div", { class: "hash", text: j.policy_hash }),
+            copyBtn("Copy hash", j.policy_hash)
+          );
+        }
+        if (j.policy_id) box.append(h("div", { class: "foot-note", text: "policy_id " + j.policy_id }));
+        if (!r.ok) showErr("publish-err", errLine(r));
+      });
+
+      function parseAmount(raw) {
+        const t = String(raw || "").trim();
+        if (!t) return null;
+        const n = Number(t);
+        return Number.isFinite(n) ? n : t;
+      }
+
+      function resultClass(raw) {
+        const s = String(raw || "").toLowerCase();
+        if (["pass", "allow", "allowed", "ok", "approve", "approved", "yes"].includes(s)) return "pass";
+        if (["fail", "deny", "denied", "block", "blocked", "unknown", "no"].includes(s)) return "fail";
+        if (["wait", "pending"].includes(s)) return "wait";
+        return s ? "wait" : "";
+      }
+
+      function kvBlock(box, rows) {
+        box.replaceChildren();
+        rows.forEach(([k, v]) => {
+          if (v == null || v === "") return;
+          box.append(h("div", { text: k }), h("div", { class: "mono", text: String(v) }));
+        });
+      }
+
+      $("form-spend").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        showErr("spend-err", "");
+        const url = $("spend-url").value;
+        const action = $("spend-action").value;
+        const body = { url, action };
+        const amount = parseAmount($("spend-amt").value);
+        if (amount != null) body.amount = amount;
+        const r = await api("/tools/spend_check", { method: "POST", body, key: opKey() });
+        setRaw("spend-raw", r.data);
+        const j = r.data || {};
+        let result = String(pick(j, ["result", "decision", "status"]) || "").toLowerCase();
+        if (!result && j.allow === true) result = "allow";
+        if (!result && j.allow === false) result = "deny";
+        if (!result && j.allowed === true) result = "allow";
+        if (!result && j.allowed === false) result = "deny";
+        const pill = $("spend-pill");
+        pill.replaceChildren();
+        if (result) pill.append(h("span", { class: "pill " + (resultClass(result) || "wait"), text: result }));
+        setSpeak("spend-speak", j.speak || "");
+        kvBlock($("spend-out"), [
+          ["Remaining", pick(j, ["remaining", "remaining_cap", "left"])],
+          ["Cap", pick(j, ["cap", "limit", "spend_cap"])],
+          ["Spent", pick(j, ["spent", "used"])],
+          ["Allowlist", Array.isArray(j.allowlist) ? j.allowlist.join(", ") : pick(j, ["allowlist"])],
+          ["Reason", pick(j, ["reason", "summary", "note"])],
+          ["Receipt", pick(j, ["receipt_id"])],
+        ]);
+        if (!r.ok) showErr("spend-err", errLine(r));
+        fillFlow({ url: j.url || url });
+      });
+
+      $("form-nut").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        showErr("nut-err", "");
+        const url = ($("nut-url").value || "").trim();
+        const r = await api("/nutrition?url=" + encodeURIComponent(url));
+        setRaw("nut-raw", r.data);
+        const j = r.data || {};
+        const pill = $("nut-pill");
+        pill.replaceChildren();
+        const stamp = pick(j, ["stamp", "result", "status", "grade"]);
+        if (stamp) pill.append(h("span", { class: "pill " + (resultClass(stamp) || "wait"), text: String(stamp) }));
+        const box = $("nut-out");
+        box.replaceChildren();
+        const name = pick(j, ["name", "agent", "title"]) || "";
+        const last = pick(j, ["last_test", "last_tested_at", "tested_at", "last_tested", "freshness"]);
+        if (r.ok) {
+          const card = h("article", { class: "card" });
+          const main = h("div");
+          main.append(h("h3", { text: name || (j.url || url) || "nutrition" }));
+          const meta = [j.kind, j.version, j.url || url].filter(Boolean).join(" · ");
+          if (meta) main.append(h("div", { class: "meta", text: meta }));
+          card.append(main);
+          if (last) {
+            card.append(
+              h("div", { class: "stamp", "aria-label": "last test" },
+                h("span", { class: "stamp-n", text: String(last).slice(0, 16) }),
+                h("span", { class: "stamp-l", text: "last test" })
+              )
+            );
+          }
+          const facts = [
+            j.summary || j.one_liner,
+            j.what || j.description,
+            j.failure_rate != null ? "failure rate " + j.failure_rate : "",
+            j.eval ? "eval " + j.eval : "",
+            j.freshness && last !== j.freshness ? "freshness " + j.freshness : "",
+          ].filter(Boolean);
+          facts.forEach((t) => card.append(h("p", { class: "summary", text: t })));
+          box.append(card);
+        }
+        if (!r.ok) showErr("nut-err", errLine(r));
+        fillFlow({ url: j.url || url });
+      });
+
+      function pendingList(data) {
+        if (Array.isArray(data)) return data;
+        if (!data || typeof data !== "object") return [];
+        for (const k of ["pending", "items", "requests", "taps"]) {
+          if (Array.isArray(data[k])) return data[k];
+        }
+        return [];
+      }
+
+      function pendingId(row) {
+        return pick(row, ["id", "request_id", "pending_id", "tap_id"]);
+      }
+
+      async function decideHitl(id, decision) {
+        showErr("hitl-err", "");
+        const body = {
+          id,
+          request_id: id,
+          decision,
+          approved: decision === "approve",
+        };
+        const r = await api("/approve", { method: "POST", body, key: opKey() });
+        setRaw("hitl-raw", r.data);
+        const j = r.data || {};
+        const box = $("hitl-out");
+        box.replaceChildren();
+        if (r.ok) {
+          box.append(
+            h("div", { text: decision === "approve" ? "Approved" : "Denied" }),
+            h("div", { class: "rid", text: String(pick(j, ["id", "request_id"]) || id) })
+          );
+          if (j.receipt_id) box.append(h("div", { class: "foot-note", text: "receipt " + j.receipt_id }));
+        }
+        if (!r.ok) showErr("hitl-err", errLine(r));
+        await loadPending();
+      }
+
+      function renderPending(j) {
+        const list = $("hitl-list");
+        list.replaceChildren();
+        const rows = pendingList(j);
+        const count = typeof (j && j.count) === "number" ? j.count : rows.length;
+        $("hitl-count").textContent = rows.length ? (count + " waiting on a human tap") : "No pending taps. Nothing invented.";
+        if (!rows.length) return;
+        rows.forEach((row) => {
+          const id = pendingId(row);
+          const who = pick(row, ["url", "target_url", "action", "reason", "query"]) || id || "pending";
+          const extra = ["action", "amount", "reason", "status", "created_at"]
+            .filter((k) => row[k] != null && row[k] !== "")
+            .map((k) => k + " " + row[k])
+            .join(" · ");
+          const item = h("article", { class: "hitl-row" });
+          const main = h("div");
+          main.append(h("div", { class: "hitl-id", text: String(id || who) }));
+          if (extra) main.append(h("span", { class: "sub", text: extra }));
+          else if (who && who !== id) main.append(h("span", { class: "sub", text: String(who) }));
+          item.append(main);
+          const acts = h("div", { class: "actions" });
+          const yes = h("button", { type: "button", text: "Approve" });
+          const no = h("button", { type: "button", class: "deny", text: "Deny" });
+          if (!id) {
+            yes.disabled = true;
+            no.disabled = true;
+          } else {
+            yes.addEventListener("click", () => decideHitl(String(id), "approve"));
+            no.addEventListener("click", () => decideHitl(String(id), "deny"));
+          }
+          acts.append(yes, no);
+          item.append(acts);
+          list.append(item);
+        });
+      }
+
+      async function loadPending() {
+        showErr("hitl-err", "");
+        const r = await api("/pending", { key: opKey() });
+        setRaw("hitl-raw", r.data);
+        if (!r.ok) {
+          showErr("hitl-err", errLine(r));
+          $("hitl-list").replaceChildren();
+          $("hitl-count").textContent = "Pending not on this host.";
+          return;
+        }
+        renderPending(r.data || {});
+      }
+
+      $("form-hitl").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        showErr("hitl-err", "");
+        const url = $("hitl-url").value;
+        const body = {
+          url,
+          action: $("hitl-action").value,
+        };
+        const amount = parseAmount($("hitl-amt").value);
+        if (amount != null) body.amount = amount;
+        if ($("hitl-reason").value) body.reason = $("hitl-reason").value;
+        let r = await api("/request_approve", { method: "POST", body, key: opKey() });
+        if (!r.ok && r.status === 404) {
+          r = await api("/tools/request_approve", { method: "POST", body, key: opKey() });
+        }
+        setRaw("hitl-raw", r.data);
+        const j = r.data || {};
+        const box = $("hitl-out");
+        box.replaceChildren();
+        const id = pick(j, ["id", "request_id", "pending_id"]);
+        if (id) {
+          box.append(h("div", { text: "Queued" }), h("div", { class: "rid", text: String(id) }));
+        } else if (r.ok) {
+          box.append(h("div", { text: "Queued." }));
+        }
+        if (!r.ok) showErr("hitl-err", errLine(r));
+        fillFlow({ url: j.url || url });
+        await loadPending();
+      });
+
+      $("form-list").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        showErr("list-err", "");
+        const body = {
+          name: $("lst-name").value,
+          url: $("lst-url").value,
+          one_liner: $("lst-one").value,
+          pond: $("lst-pond").value || "ai-tools",
+        };
+        const r = await api("/listings", { method: "POST", body, key: opKey() });
+        setRaw("list-raw", r.data);
+        const box = $("list-out");
+        box.replaceChildren();
+        if (r.ok) {
+          const j = r.data || {};
+          const card = h("article", { class: "card" });
+          card.append(h("div", null, h("h3", { text: j.name || body.name })));
+          const n = j.unique_score == null ? "—" : String(j.unique_score);
+          card.append(
+            h("div", { class: "stamp", "aria-label": "unique score " + n },
+              h("span", { class: "stamp-n", text: n }),
+              h("span", { class: "stamp-l", text: "unique" })
+            )
+          );
+          if (j.unique_note) card.append(h("p", { class: "unique-note", text: j.unique_note }));
+          if (j.one_liner) card.append(h("p", { class: "summary", text: j.one_liner }));
+          if (j.pond) card.append(h("div", { class: "meta", text: "pond " + j.pond }));
+          box.append(card);
+        }
+        if (!r.ok) showErr("list-err", errLine(r));
+      });
+
+      function itemLine(x) {
+        if (x == null) return { title: "", sub: "" };
+        if (typeof x !== "object") return { title: String(x), sub: "" };
+        const title = pick(x, ["domain", "query", "url", "q", "host", "name"]) || JSON.stringify(x);
+        const extra = ["count", "n", "last_seen", "created_at", "reason", "result"]
+          .filter((k) => x[k] != null && x[k] !== "")
+          .map((k) => k + " " + x[k])
+          .join(" · ");
+        return { title: String(title), sub: extra };
+      }
+
+      function fillList(ul, items, emptyText) {
+        ul.replaceChildren();
+        const arr = asList(items);
+        if (!arr.length) {
+          ul.append(h("li", { text: emptyText }));
+          return;
+        }
+        arr.forEach((x) => {
+          const line = itemLine(x);
+          const li = h("li", { text: line.title });
+          if (line.sub) li.append(h("span", { class: "sub", text: line.sub }));
+          ul.append(li);
+        });
+      }
+
+      async function loadDemand() {
+        showErr("demand-err", "");
+        const r = await api("/demand");
+        setRaw("demand-raw", r.data);
+        if (!r.ok) {
+          showErr("demand-err", errLine(r));
+          $("demand-fail").replaceChildren();
+          $("demand-miss").replaceChildren();
+          return;
+        }
+        const j = r.data || {};
+        fillList($("demand-fail"), j.failed_domains || j.failed || j.refuses, "No failed domains on tape.");
+        fillList($("demand-miss"), j.missing_queries || j.missing || j.queries, "No missing queries on tape.");
+      }
+
+      function eventTime(row) {
+        return pick(row, ["created_at", "ts", "stored_at", "checked_at", "at"]) || "";
+      }
+      function eventKind(row) {
+        const k = String(pick(row, ["kind", "type", "event"]) || "").toUpperCase();
+        if (k) return k.slice(0, 4);
+        if (row.receipt_id && row.item_url) return "CLK";
+        if (row.receipt_id && !row.url) return "RCP";
+        if (row.match_count != null || (row.query && row.match_count === 0)) return "SRCH";
+        if (row.result || row.url) return "CHK";
+        return "EVT";
+      }
+      function tapeEvents(data) {
+        if (Array.isArray(data)) return data;
+        if (data && Array.isArray(data.events)) return data.events;
+        if (data && Array.isArray(data.tape)) return data.tape;
+        const out = [];
+        const bags = [
+          ["CHK", "checks"],
+          ["RCP", "receipts"],
+          ["CLK", "clicks"],
+          ["SRCH", "searches"],
+        ];
+        bags.forEach(([kind, key]) => {
+          asList(data && data[key]).forEach((row) => out.push(Object.assign({ kind }, row)));
+        });
+        out.sort((a, b) => String(eventTime(b)).localeCompare(String(eventTime(a))));
+        return out;
+      }
+      function tapeDetail(row) {
+        const bits = [];
+        const result = pick(row, ["result", "pass"]);
+        if (result != null && result !== "") bits.push(String(result));
+        const who = pick(row, ["url", "item_url", "target_url", "domain", "query", "name"]);
+        if (who) bits.push(String(who));
+        const id = pick(row, ["receipt_id", "check_id", "id", "policy_hash"]);
+        if (id && String(id) !== String(who)) bits.push(String(id));
+        if (row.match_count != null) bits.push(row.match_count + " matches");
+        if (row.unique_score != null) bits.push("unique " + row.unique_score);
+        return bits.join("  ·  ") || JSON.stringify(row);
+      }
+
+      async function loadTape() {
+        showErr("tape-err", "");
+        const r = await api("/tape");
+        setRaw("tape-raw", r.data);
+        const rows = $("tape-rows");
+        rows.replaceChildren();
+        if (!r.ok) {
+          showErr("tape-err", errLine(r));
+          rows.append(h("div", { class: "trow" }, h("div", { class: "detail", text: "Tape not on this host yet." })));
+          return;
+        }
+        const events = tapeEvents(r.data);
+        $("tape-meta").textContent = events.length ? events.length + " rows · the log is the company" : "empty · the log is the company";
+        if (!events.length) {
+          rows.append(h("div", { class: "trow" }, h("div", { class: "detail", text: "No rows on tape yet. Nothing invented." })));
+          return;
+        }
+        events.forEach((row) => {
+          const result = String(pick(row, ["result"]) || "").toLowerCase();
+          const resClass = result === "pass" ? "pass" : result === "fail" || result === "unknown" ? "fail" : "";
+          rows.append(
+            h("div", { class: "trow" },
+              h("div", { class: "mono", text: eventTime(row) || "—" }),
+              h("div", { class: "kind", text: eventKind(row) }),
+              h("div", { class: "detail " + resClass, text: tapeDetail(row) })
+            )
+          );
+        });
+      }
+
+      $("btn-demand").addEventListener("click", loadDemand);
+      $("btn-tape").addEventListener("click", loadTape);
+      $("btn-pending").addEventListener("click", loadPending);
+
+      async function ping() {
+        const el = $("line");
+        const r = await api("/health");
+        if (!r.ok) {
+          el.dataset.state = "down";
+          el.textContent = "line down";
+          return;
+        }
+        el.dataset.state = "up";
+        const j = r.data || {};
+        const bits = ["line up"];
+        ["orgs", "policies", "receipts", "listings", "checks", "clicks"].forEach((k) => {
+          if (j[k] != null) bits.push(k + " " + j[k]);
+        });
+        el.textContent = bits.join("  ·  ");
+      }
+
+      function tick() {
+        const d = new Date();
+        const iso = d.toISOString().replace("T", " ").replace(/\.\d+Z$/, "Z");
+        const el = $("clock");
+        el.dateTime = d.toISOString();
+        el.textContent = iso;
+      }
+
+      const bays = Array.from(document.querySelectorAll(".bay[id]"));
+      const links = Array.from(document.querySelectorAll(".rail a"));
+      const io = new IntersectionObserver((entries) => {
+        const vis = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!vis) return;
+        const id = vis.target.id;
+        links.forEach((a) => a.classList.toggle("is-on", a.getAttribute("href") === "#" + id));
+      }, { rootMargin: "-18% 0px -70% 0px", threshold: [0.2, 0.5] });
+      bays.forEach((b) => io.observe(b));
+
+      tick();
+      setInterval(tick, 1000);
+      ping();
+      loadTape();
+      loadDemand();
+      loadPending();
+    })();
+  </script>
+</body>
+</html>

@@ -36,6 +36,7 @@ Weekend seed was 1 + 3. Uniqueness is next on the same switchboard. Do not turn 
 - `trust_check(url)` — pass/fail + policy hash + summary
 - `log_intent(...)` — receipt_id (the tape)
 - `whats_good_for(query)` — attested first; unique first when uniqueness exists; unattested last or omitted
+- `handshake(url, asker, context, their_answer)` — bot meets bot: “Are you on Trust Switch?” Records `other_bot_trusted_per_trust_switch` yes/no + `trust_switch_activation` off/on. Business proceeds while activation is off (default). Not a recommend gate. No key.
 
 Publish policy (keyed): org name, site, what they store, region, dispute email → policy_id + hash.
 
@@ -53,12 +54,14 @@ Database private. Schema may be public. Log everything that matters from day one
 8. Never invent a winner. Empty list is honest.
 9. Seed/example orgs exist so `trust_check` is not empty. They are **fixtures**. They do not appear in `whats_good_for`. Attested for recommend = a real org published, not a typed-in example.
 10. Listing ingest is a write. It needs a key. Spam would junk the pond.
+11. **Fail closed is for recommending to a human.** Using or talking to another bot/vendor is a `handshake`: ask, record the no, proceed. Nobody is on Trust Switch yet; a wall there blocks our own products and seeds nothing. Activation on is a later switch, flipped by Paul, not by a rule.
 
 ## How other AIs talk to humans
 
 Fail/unknown: “I can’t recommend that yet. They have no live policy on the switchboard.”
 Pass: “Use X. Policy hash … Receipt …”
 whats_good_for: attested unique items first.
+Handshake no (activation off): “X is not on Trust Switch yet. Noted. Proceeding.” Then say `ask_them` to the other bot.
 
 ## Not this
 

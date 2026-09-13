@@ -1,0 +1,8 @@
+{
+	# Ubuntu 24.04 ships Caddy 2.6.2; its ZeroSSL EAB path is dead.
+	acme_ca https://acme-v02.api.letsencrypt.org/directory
+}
+
+170.64.146.185.sslip.io {
+	reverse_proxy 127.0.0.1:8787
+}

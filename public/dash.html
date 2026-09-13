@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trust Switchboard pickup</title>
+  <link rel="describedby" href="/llms.txt" type="text/plain" />
+  <link rel="alternate" type="application/a2a+json" href="/.well-known/agent-card.json" />
+  <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/ai-catalog+json" />
+  <style>
+    :root {
+      --bg: #12150f; --ink: #e8e2d2; --dim: #9a937e; --brass: #c4a15a;
+      --paper: #e6dcc4; --pass: #7db872; --fail: #d96a5c; --line: #2c3124;
+      --card: #181c14; --mono: ui-monospace, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 15px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+    header, main { max-width: 980px; margin: 0 auto; padding: 22px; }
+    h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -.02em; }
+    p.lead, .dim { color: var(--dim); }
+    a { color: var(--brass); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+    .n { font: 700 42px/1 var(--mono); color: var(--paper); }
+    .n.zero { color: var(--dim); }
+    .n.up { color: var(--pass); }
+    .lbl { text-transform: uppercase; letter-spacing: .08em; font-size: 11px; color: var(--dim); margin-bottom: 8px; }
+    ul { margin: 8px 0 0; padding-left: 18px; }
+    table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px; }
+    th, td { text-align: left; padding: 6px 0; border-bottom: 1px solid var(--line); }
+    .ok { color: var(--pass); } .bad { color: var(--fail); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Trust Switchboard pickup</h1>
+    <p class="lead">Expected vs actual calls on the switchboard. Expected stays 0 until other AIs can find us. Actual is the log. <a href="/">Desk</a> · <a href="/for-agents">Seed for other AIs</a></p>
+  </header>
+  <main>
+    <div class="grid">
+      <section class="card">
+        <div class="lbl">Expected / day</div>
+        <div class="n zero" id="exp">—</div>
+        <p class="dim" id="exp-note"></p>
+      </section>
+      <section class="card">
+        <div class="lbl">Actual last 24h</div>
+        <div class="n" id="act">—</div>
+        <p class="dim">Checks + searches. Gap <span id="gap" class="mono"></span></p>
+      </section>
+      <section class="card">
+        <div class="lbl">HITL pending</div>
+        <div class="n" id="pending">—</div>
+        <p class="dim" id="pending-note">Count only if /pending answers.</p>
+      </section>
+    </div>
+    <section class="card" style="margin-top:14px">
+      <div class="lbl">Why expected is what it is</div>
+      <ul id="blockers"></ul>
+    </section>
+    <section class="card" style="margin-top:14px">
+      <div class="lbl">Tape</div>
+      <table>
+        <thead><tr><th></th><th>24h</th><th>All time</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p class="dim" id="asof"></p>
+    </section>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    fetch("/pickup").then((r) => r.json()).then((j) => {
+      $("exp").textContent = j.expected_per_day;
+      $("exp").className = "n" + (j.expected_per_day ? "" : " zero");
+      $("act").textContent = j.actual_24h;
+      $("act").className = "n" + (j.actual_24h ? " up" : " zero");
+      $("gap").textContent = (j.gap_24h >= 0 ? "+" : "") + j.gap_24h;
+      $("exp-note").textContent = j.note || "";
+      const ul = $("blockers");
+      ul.innerHTML = "";
+      (j.blockers || []).forEach((b) => {
+        const li = document.createElement("li");
+        li.textContent = b;
+        ul.appendChild(li);
+      });
+      if (!(j.blockers || []).length) {
+        const li = document.createElement("li");
+        li.textContent = "No blockers on file. Expected is the env number.";
+        ul.appendChild(li);
+      }
+      const names = ["checks", "searches", "receipts", "clicks"];
+      $("rows").innerHTML = names.map((n) =>
+        `<tr><td>${n}</td><td>${(j.counts_24h||{})[n]||0}</td><td>${(j.counts_all||{})[n]||0}</td></tr>`
+      ).join("");
+      $("asof").textContent = (j.public_url || "") + " · " + (j.as_of || "");
+    }).catch(() => {
+      $("exp-note").textContent = "Pickup API not reachable.";
+    });
+    fetch("/pending").then((r) => {
+      if (!r.ok) throw new Error("pending not on this host");
+      return r.json();
+    }).then((j) => {
+      const rows = Array.isArray(j)
+        ? j
+        : (j && Array.isArray(j.pending) ? j.pending
+          : j && Array.isArray(j.items) ? j.items
+          : j && Array.isArray(j.requests) ? j.requests
+          : j && Array.isArray(j.taps) ? j.taps
+          : null);
+      let n = null;
+      if (j && typeof j.count === "number") n = j.count;
+      else if (rows) n = rows.length;
+      if (n == null) {
+        $("pending-note").textContent = "Pending answered with no count. Not invented.";
+        return;
+      }
+      $("pending").textContent = n;
+      $("pending").className = "n" + (n ? " up" : " zero");
+      const note = $("pending-note");
+      note.replaceChildren();
+      if (!n) {
+        note.textContent = "None waiting.";
+        return;
+      }
+      note.append(String(n) + " waiting. ");
+      const a = document.createElement("a");
+      a.href = "/#hitl";
+      a.textContent = "Desk HITL";
+      note.appendChild(a);
+    }).catch(() => {
+      $("pending").textContent = "—";
+      $("pending").className = "n zero";
+      $("pending-note").textContent = "Pending not on this host. Count not invented.";
+    });
+  </script>
+</body>
+</html>

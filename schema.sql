@@ -150,3 +150,22 @@ CREATE TABLE IF NOT EXISTS approvals (
 );
 CREATE INDEX IF NOT EXISTS idx_approvals_status ON approvals(status);
 CREATE INDEX IF NOT EXISTS idx_approvals_created ON approvals(created_at);
+
+-- Handshake: "Are you on Trust Switch?" Bot meets bot; ask, record, proceed.
+-- activation off = observe (default). The "no" rows are demand.
+CREATE TABLE IF NOT EXISTS handshakes (
+  id TEXT PRIMARY KEY,
+  url TEXT NOT NULL,
+  domain TEXT,
+  asker TEXT,
+  context TEXT,
+  their_answer TEXT,
+  on_trust_switch INTEGER NOT NULL DEFAULT 0,
+  activation TEXT NOT NULL DEFAULT 'off',
+  proceed INTEGER NOT NULL DEFAULT 1,
+  reason TEXT,
+  policy_hash TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_handshakes_domain ON handshakes(domain);
+CREATE INDEX IF NOT EXISTS idx_handshakes_created ON handshakes(created_at);

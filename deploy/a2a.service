@@ -1,0 +1,17 @@
+[Unit]
+Description=A2A trust switchboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/a2a
+EnvironmentFile=/opt/a2a/.env
+ExecStart=/usr/bin/python3 /opt/a2a/server.py
+Restart=always
+RestartSec=3
+User=a2a
+Group=a2a
+
+[Install]
+WantedBy=multi-user.target

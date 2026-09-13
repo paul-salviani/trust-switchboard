@@ -15,6 +15,7 @@ from typing import Any, Callable
 import auth
 import geo
 import policy
+import handshake as handshake_mod
 import recommend
 import tape
 
@@ -69,6 +70,25 @@ TOOLS = [
         "inputSchema": {
             "type": "object",
             "properties": {"url": {"type": "string"}},
+            "required": ["url"],
+        },
+    },
+    {
+        "name": "handshake",
+        "description": (
+            "Bot meets bot: ask 'Are you on Trust Switch?' before dealing with another "
+            "agent or vendor. Records yes/no. While activation is off (default) business "
+            "proceeds either way. Not a recommend gate; use trust_check for that."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string"},
+                "asker": {"type": "string"},
+                "context": {"type": "string"},
+                "their_answer": {"type": "string"},
+                "activation": {"type": "string", "enum": ["off", "on"]},
+            },
             "required": ["url"],
         },
     },
@@ -574,6 +594,8 @@ def _call_tool(con: sqlite3.Connection, name: str, args: dict, api_key_raw: str 
         data = whats_good_for(con, args.get("query") or "", pond=args.get("pond"), limit=limit)
     elif name == "trust_check":
         data = trust_check(con, args.get("url") or "")
+    elif name == "handshake":
+        data = handshake_mod.handshake(con, args)
     elif name == "log_intent":
         data = log_intent(con, args, key)
     elif name == "commit_recommend":

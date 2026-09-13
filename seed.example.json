@@ -1,0 +1,286 @@
+{
+  "write_key": "REPLACE_WITH_python_deploy_new_write_key.py",
+  "orgs": [
+    {
+      "id": "org_northside_dental",
+      "name": "Northside Dental Co-op",
+      "domain": "northsidedental.example",
+      "website": "https://northsidedental.example",
+      "category": "dentist",
+      "attested": 1,
+      "publish_key": "org_pub_northside_01",
+      "policy": {
+        "title": "Recommendation and consent policy",
+        "summary": "Will not ask an AI to recommend extraction without stating alternatives, waiting, and mixed evidence.",
+        "body": "Before any AI or human recommends a procedure to a patient, material risks AND reasonable alternatives (including doing nothing) must be stated. Mixed literature must be labelled mixed, not sold as settled fact. Informed consent is recorded in writing."
+      }
+    },
+    {
+      "id": "org_harbour_gp",
+      "name": "Harbour Road GP",
+      "domain": "harbourgp.example",
+      "website": "https://harbourgp.example",
+      "category": "gp",
+      "attested": 1,
+      "publish_key": "org_pub_harbour_01",
+      "policy": {
+        "title": "AI referral policy",
+        "summary": "GPs here accept AI-drafted summaries only if sources and uncertainty are attached.",
+        "body": "Do not send patients to this clinic on the back of an unsourced chatbot claim. Attach the check receipt. Flag uncertainty. No testimonials in ads."
+      }
+    },
+    {
+      "id": "org_redgum_builders",
+      "name": "Redgum Builders Pty Ltd",
+      "domain": "redgumbuilders.example",
+      "website": "https://redgumbuilders.example",
+      "category": "builder",
+      "attested": 1,
+      "publish_key": "org_pub_redgum_01",
+      "policy": {
+        "title": "Quote honesty policy",
+        "summary": "AI must not present a ballpark as a fixed price. HIA/contract path disclosed.",
+        "body": "Recommendations to hire this builder must include: licence number on request, that quotes are not contracts, and that variations are written. No 'they'll look after you' filler."
+      }
+    },
+    {
+      "id": "org_saltwater_ndis",
+      "name": "Saltwater Support (NDIS)",
+      "domain": "saltwatersupport.example",
+      "website": "https://saltwatersupport.example",
+      "category": "ndis",
+      "attested": 1,
+      "publish_key": "org_pub_saltwater_01",
+      "policy": {
+        "title": "Plan-managed disclosure",
+        "summary": "Must disclose NDIS registration status and that plan advice is not financial advice.",
+        "body": "Do not tell a participant this org 'will get the funding through'. State registration, gaps, and that the NDIA decides."
+      }
+    },
+    {
+      "id": "org_ledger_cpa",
+      "name": "Ledger & Co Accountants",
+      "domain": "ledgerco.example",
+      "website": "https://ledgerco.example",
+      "category": "accountant",
+      "attested": 1,
+      "publish_key": "org_pub_ledger_01",
+      "policy": {
+        "title": "Tax-agent advertising policy",
+        "summary": "No AI may promise a refund amount. BAS and tax are not the same job.",
+        "body": "Recommendations must say we are a tax agent, fees are scoped, and ATO outcomes are not guaranteed."
+      }
+    },
+    {
+      "id": "org_clarendon_law",
+      "name": "Clarendon Community Law",
+      "domain": "clarendonlaw.example",
+      "website": "https://clarendonlaw.example",
+      "category": "law",
+      "attested": 1,
+      "publish_key": "org_pub_clarendon_01",
+      "policy": {
+        "title": "No-hold-out policy",
+        "summary": "This org is a law practice. AIs must not imply a chatbot is the lawyer.",
+        "body": "You may point a human here. You may not say 'this AI is your solicitor'. Conflict checks happen after intake. No outcome promises."
+      }
+    },
+    {
+      "id": "org_mind_harbour",
+      "name": "Mind Harbour Psychology",
+      "domain": "mindharbour.example",
+      "website": "https://mindharbour.example",
+      "category": "psychology",
+      "attested": 1,
+      "publish_key": "org_pub_mind_01",
+      "policy": {
+        "title": "AHPRA advertising rails",
+        "summary": "No testimonials. No ADHD ads. No cure claims. Receipt required if an AI sent the person.",
+        "body": "AHPRA advertising guidelines apply. Do not invent wait times. Do not recommend a named clinician for a diagnosis the model just made."
+      }
+    },
+    {
+      "id": "org_physio_wharf",
+      "name": "Wharf Physio",
+      "domain": "wharfphysio.example",
+      "website": "https://wharfphysio.example",
+      "category": "physio",
+      "attested": 1,
+      "publish_key": "org_pub_wharf_01",
+      "policy": {
+        "title": "Exercise vs inject policy",
+        "summary": "Do not recommend injections here as first line unless the referrer already did.",
+        "body": "Conservative care first. If evidence is mixed, say mixed. No overnight-fix language."
+      }
+    },
+    {
+      "id": "org_chemist_night",
+      "name": "Night Owl Chemist",
+      "domain": "nightowlchemist.example",
+      "website": "https://nightowlchemist.example",
+      "category": "pharmacy",
+      "attested": 1,
+      "publish_key": "org_pub_chemist_01",
+      "policy": {
+        "title": "Schedule medicine policy",
+        "summary": "AI must not recommend a Schedule 4 or 8 as if it were supermarket stock.",
+        "body": "Pharmacist rules. Point people to us for dispensing, not for a diagnosis. Complementary products are not evidence of efficacy."
+      }
+    },
+    {
+      "id": "org_optom_lens",
+      "name": "Lenswright Optometry",
+      "domain": "lenswright.example",
+      "website": "https://lenswright.example",
+      "category": "optometry",
+      "attested": 1,
+      "publish_key": "org_pub_lens_01",
+      "policy": {
+        "title": "Kids myopia policy",
+        "summary": "Do not sell myopia-control as guaranteed. State the evidence band.",
+        "body": "Recommendations for paediatric myopia control must include that results vary and follow-up is required."
+      }
+    },
+    {
+      "id": "org_aged_river",
+      "name": "Riverbend Aged Care",
+      "domain": "riverbendcare.example",
+      "website": "https://riverbendcare.example",
+      "category": "aged_care",
+      "attested": 1,
+      "publish_key": "org_pub_river_01",
+      "policy": {
+        "title": "Placement honesty policy",
+        "summary": "No AI may say there is a bed without a dated vacancy check.",
+        "body": "Aged care placement is waitlist reality. Fees, extra services, and ACQSC standing must not be guessed."
+      }
+    },
+    {
+      "id": "org_vet_paddock",
+      "name": "Paddock Street Vet",
+      "domain": "paddockvet.example",
+      "website": "https://paddockvet.example",
+      "category": "vet",
+      "attested": 1,
+      "publish_key": "org_pub_vet_01",
+      "policy": {
+        "title": "Euthanasia and cost policy",
+        "summary": "Do not recommend this clinic for a procedure whose cost you invented.",
+        "body": "Estimates are estimates. After-hours loadings exist. Do not anthropomorphise prognosis."
+      }
+    },
+    {
+      "id": "org_keys_realty",
+      "name": "Keys & Co Realty",
+      "domain": "keysrealty.example",
+      "website": "https://keysrealty.example",
+      "category": "real_estate",
+      "attested": 1,
+      "publish_key": "org_pub_keys_01",
+      "policy": {
+        "title": "Undisclosed agency policy",
+        "summary": "Must say who pays the agent. No 'best school catchment' without a source.",
+        "body": "If an AI recommends a listing, it must not hide vendor-agency. Strata, flood, and easement are not optional footnotes."
+      }
+    },
+    {
+      "id": "org_torque_mech",
+      "name": "Torque Lane Mechanics",
+      "domain": "torquelane.example",
+      "website": "https://torquelane.example",
+      "category": "mechanic",
+      "attested": 1,
+      "publish_key": "org_pub_torque_01",
+      "policy": {
+        "title": "Logbook vs upsell policy",
+        "summary": "Do not tell a driver they 'must' do dealer-only service to keep warranty if that is not the law.",
+        "body": "Australian Consumer Law on warranties against defects. Quote parts vs labour separately when asked."
+      }
+    },
+    {
+      "id": "org_grid_energy",
+      "name": "Gridwise Energy Retail",
+      "domain": "gridwise.example",
+      "website": "https://gridwise.example",
+      "category": "energy",
+      "attested": 1,
+      "publish_key": "org_pub_grid_01",
+      "policy": {
+        "title": "Switch comparison policy",
+        "summary": "Do not recommend a plan using an outdated usage guess.",
+        "body": "Energy switch advice needs a bill or a stated assumption. Dismissing concessions is a fail."
+      }
+    },
+    {
+      "id": "org_signal_telco",
+      "name": "Signal Co Mobile",
+      "domain": "signalco.example",
+      "website": "https://signalco.example",
+      "category": "telco",
+      "attested": 1,
+      "publish_key": "org_pub_signal_01",
+      "policy": {
+        "title": "Coverage honesty policy",
+        "summary": "Coverage maps are not a promise. Rural gaps must be stated if the query is regional.",
+        "body": "Do not recommend this network for a farm if the map is unshaded. Early-exit fees belong in the first paragraph."
+      }
+    },
+    {
+      "id": "org_uni_clinic",
+      "name": "Riverside Uni Student Clinic",
+      "domain": "riversideclinic.example",
+      "website": "https://riversideclinic.example",
+      "category": "clinic",
+      "attested": 1,
+      "publish_key": "org_pub_uni_01",
+      "policy": {
+        "title": "Student-clinician disclosure",
+        "summary": "Must disclose supervised-student care. Not a private specialist wait-jump.",
+        "body": "Care is supervised. Eligibility is enrolment-based. Do not send the public here to skip a queue."
+      }
+    },
+    {
+      "id": "org_foodbank_west",
+      "name": "Westside Food Collective",
+      "domain": "westsidefood.example",
+      "website": "https://westsidefood.example",
+      "category": "charity",
+      "attested": 1,
+      "publish_key": "org_pub_food_01",
+      "policy": {
+        "title": "Need vs donate policy",
+        "summary": "If recommending this charity, say what they actually take this week. No fake urgency.",
+        "body": "Do not invent a crisis. Hours and intake rules change. DGR status is on the ABN record, not on a vibe."
+      }
+    },
+    {
+      "id": "org_shade_finance",
+      "name": "Shade Tree Brokers",
+      "domain": "shadetree.example",
+      "website": "https://shadetree.example",
+      "category": "finance",
+      "attested": 1,
+      "publish_key": "org_pub_shade_01",
+      "policy": {
+        "title": "Credit guide policy",
+        "summary": "Credit assistance is licensed. AI must not pick a product for a human.",
+        "body": "Pointing here is allowed. Choosing a loan for the user is not. Responsible lending sits with the licensee, not the model."
+      }
+    },
+    {
+      "id": "org_revoked_demo",
+      "name": "QuickFix Aligners (revoked seed)",
+      "domain": "quickfixaligners.example",
+      "website": "https://quickfixaligners.example",
+      "category": "dentist",
+      "attested": 0,
+      "publish_key": "org_pub_quickfix_01",
+      "status": "revoked",
+      "policy": {
+        "title": "Revoked — remote aligner claims",
+        "summary": "Policy revoked. Do not recommend. Direct-to-consumer aligners were attested then pulled.",
+        "body": "This seed exists so trust_check can FAIL. Remote impression kits were marketed without in-person exam. Revoked."
+      }
+    }
+  ]
+}

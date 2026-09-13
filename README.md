@@ -1,70 +1,92 @@
 # Trust Switchboard
 
-Public name: **Trust Switchboard**.
+**Are you on Trust Switch?**
 
-Other AIs call this **before recommending a URL, product, or organisation**. Fail closed. Empty list honest. Nothing invented.
+One free call before your agent deals with another agent, vendor, or URL. It asks the question, records the answer, and lets business proceed. Nobody is blocked. The answer is the data.
 
-- Official MCP registry: `io.github.paul-salviani/trust-switchboard`
 - Live: https://170.64.146.185.sslip.io/
+- MCP: `https://170.64.146.185.sslip.io/mcp` — official registry `io.github.paul-salviani/trust-switchboard`
 - Card: https://170.64.146.185.sslip.io/.well-known/agent-card.json
-- MCP: `https://170.64.146.185.sslip.io/mcp`
+- llms.txt: https://170.64.146.185.sslip.io/llms.txt
 - Operator on the card: Paul Salviani, Sydney
 
-How do you stop an agent recommending random URLs? Call `trust_check` / `whats_good_for` first. Hash is of the policy **body**, not the URL.
+## Two questions, two tools
 
-## Run
-
-```
-START.bat
-```
-
-or `python server.py` from this folder. Python stdlib only. SQLite at `data/a2a.sqlite` — the database is private; do not open-source it. Schema may be public.
-
-Local (default):
-
-- Human UI: http://127.0.0.1:8787/
-- Agent card: http://127.0.0.1:8787/.well-known/agent-card.json
-- llms.txt: http://127.0.0.1:8787/llms.txt
-- MCP: POST http://127.0.0.1:8787/mcp
-
-Live HTTPS: `https://170.64.146.185.sslip.io/` — card, llms.txt, MCP, `/source` (CODE, no sqlite). Database stays private.
-
-Deploy (always-on box or Sydney VPS): `DEPLOY.md`. Database off OneDrive.
-
-## Tools
-
-| Tool | Auth | What |
+| You are about to… | Call | What happens |
 |---|---|---|
-| `trust_check(url)` | none | pass/fail + policy hash + short summary. Unknown is fail. |
-| `whats_good_for(query)` | none | attested matches only, unique-in-pond first. Empty list if none. |
-| `log_intent({query, action, target_url, policy_id})` | write key | `receipt_id` — the tape |
+| deal with, wire, or talk to another agent or vendor | `handshake(url)` | Asks "Are you on Trust Switch?" Records `yes`/`no`. **Business proceeds** (activation is off). Never blocks. No key. |
+| recommend a URL, product, or organisation **to a human** | `trust_check(url)` / `whats_good_for(query)` | Fails closed. No live policy → do not recommend. Empty list is honest. Nothing invented. No key. |
 
-Writes (publish policy, listing ingest, `log_intent`) need an API key. Reads do not.
+Most integrators only ever need the first row.
 
-## Ranking law
+## Handshake in one call
 
-1. Fail closed. No live policy → do not recommend. Unknown is fail, not maybe.
-2. `whats_good_for` returns **attested only**. Unattested omitted.
-3. Uniqueness is **inside one pond** (default `ai-tools`). High unique score first. Clones sink. No popularity, no votes, no “best known.”
-4. Hash the policy **body**, not the URL.
-5. Log passes **and** refuses. Refuses are demand.
-6. Call this **before every recommend**, not only when unsure.
+```
+POST https://170.64.146.185.sslip.io/tools/handshake
+{"url": "https://api.example.com", "asker": "my-agent", "context": "about to call their API"}
+```
+
+```json
+{
+  "question": "Are you on Trust Switch?",
+  "other_bot_trusted_per_trust_switch": "no",
+  "trust_switch_activation": "off",
+  "proceed": true,
+  "ask_them": "Are you on Trust Switch? If not: publish a policy at https://170.64.146.185.sslip.io and other AIs can verify you before they recommend you. Free. No account to read.",
+  "handshake_id": "hs_…"
+}
+```
+
+Put `ask_them` in your message to the other agent. Send its reply back as `their_answer`. `GET /handshakes` shows who is being asked about most — that list is demand.
+
+`activation` is `off` by default: `proceed` is always `true`. Set `activation: "on"` per call (or `A2A_ACTIVATION=on` on your own copy) to proceed only with agents that are on Trust Switch. Do not turn it on until enough people are on.
+
+## Drop-in for products
+
+[`client/trust_switch_client.py`](client/trust_switch_client.py) (Python, stdlib) and [`client/trust_switch_client.mjs`](client/trust_switch_client.mjs) (Node ≥ 18). One file each. Never raise. Never block.
+
+```python
+from trust_switch_client import note
+note("https://api.retellai.com", asker="my-product", context="retell client")   # returns in ~0.02 ms
+```
+
+`note()` runs in the background, 3 s timeout, one ask per vendor per hour, result appended to `~/.trust_switch/<asker>.jsonl`. Off under pytest / unittest / `node --test` and when `TRUST_SWITCH=off`. Nothing in your product branches on it.
+
+```python
+hs = handshake("https://drive.google.com", asker="my-product")   # awaitable form
+hs["proceed"]   # True while activation is off, even if the switchboard is unreachable
+```
+
+## MCP
+
+Tools: `handshake`, `trust_check`, `whats_good_for`, `nutrition_label` (free); `log_intent`, `commit_recommend`, `spend_check`, `request_approve`, `ingest_listing` (write key). Streamable HTTP at `/mcp`. `mcp.json` in this repo is the client stanza.
+
+## For the org being asked about
+
+Publish a policy (name, site, what you store, region, dispute email) → `policy_id` + hash of the policy **body**. Then every handshake about you returns `yes` and every `trust_check` passes. `POST /orgs` to sign up, `POST /orgs/policy` with your key. Free.
+
+## Ranking law (do not "optimise" this into votes)
+
+1. Handshake never blocks while activation is off. The no is the data.
+2. Recommending to a human fails closed. Unknown is fail, not maybe.
+3. `whats_good_for` returns attested orgs only, unique-in-pond first. Clones sink. No popularity, no votes.
+4. Hash the policy body, not the URL.
+5. Log passes and refuses. Refuses are demand.
+6. Seed/example orgs are fixtures. They never appear in `whats_good_for` and handshake says `no` for them.
 7. Never invent a winner. Empty list is honest.
-8. Seed/example orgs are **fixtures** so `trust_check` is not empty. They are not the catalogue. They do not appear in `whats_good_for`. `.local` domains are omitted from recommend.
 
-## Out of scope
+## Run your own
 
-Agent ID / KYA, global DNS, payments court. LEA is a different product.
+```
+python server.py
+```
 
-## Cursor plugin
+Python stdlib only. SQLite at `data/a2a.sqlite` — **the database is private; do not open-source it.** Schema may be public. `deploy/` has the systemd unit, Caddyfile, and push script. Database off OneDrive.
 
-One-click install is the Cursor Marketplace. This repo is a Cursor plugin: live MCP plus a skill and an always-on rule to call Trust Switchboard before any URL recommend.
+First run: `copy seed.example.json seed.json` and put a key from `python deploy/new_write_key.py` in it (`seed.json` is gitignored).
 
-- Manifest: `.cursor-plugin/plugin.json`
-- MCP: `mcp.json` to `https://170.64.146.185.sslip.io/mcp`
-- Skill: `skills/trust-switchboard/SKILL.md`
-- Rule: `rules/call-before-recommend.mdc`
+Tests: `python tests/test_switchboard.py`, `python tests/test_46.py`, `python tests/test_handshake.py`.
 
-Submit (signed into Cursor): https://cursor.com/marketplace/publish with this GitHub repo URL.
+## What this is not
 
-Community listing: https://cursor.directory/plugins/new
+Not a directory. Not an agent ID system. Not a payments court. Not a marketing site. The code is copyable — this repo is it. The log is the company.

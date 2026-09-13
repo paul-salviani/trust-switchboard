@@ -15,6 +15,7 @@ import auth
 import db
 import envfile
 import geo
+import handshake
 import hitl
 import mcp
 import nutrition
@@ -170,6 +171,7 @@ def health(con: sqlite3.Connection) -> dict:
         "receipts": _count(con, "SELECT COUNT(*) FROM receipts"),
         "listings": _count(con, "SELECT COUNT(*) FROM listings"),
         "checks": _count(con, "SELECT COUNT(*) FROM checks"),
+        "handshakes": _count(con, "SELECT COUNT(*) FROM handshakes"),
         "attested_live": _count(
             con,
             """
@@ -784,6 +786,13 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/tape":
                 self._send(200, recent_tape(con))
                 return
+            if path == "/handshakes":
+                try:
+                    lim = int((qs.get("limit") or ["50"])[0])
+                except (TypeError, ValueError):
+                    lim = 50
+                self._send(200, handshake.handshake_stats(con, lim))
+                return
             if path == "/ideas":
                 self._send(200, list_ideas(con))
                 return
@@ -860,6 +869,9 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path == "/tools/trust_check":
                 self._send(200, mcp.trust_check(con, payload.get("url") or ""))
+                return
+            if path in ("/tools/handshake", "/tools/are_you_on_trust_switch"):
+                self._send(200, handshake.handshake(con, payload, root_url(self)))
                 return
             if path == "/tools/whats_good_for":
                 limit = payload.get("limit")
