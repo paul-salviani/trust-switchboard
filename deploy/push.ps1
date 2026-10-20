@@ -12,7 +12,7 @@ ssh @ssh "root@$HostName" "mkdir -p /opt/a2a/public /opt/a2a/deploy /opt/a2a/tes
 $files = @(
     "server.py", "db.py", "auth.py", "policy.py", "tape.py", "uniqueness.py",
     "recommend.py", "geo.py", "mcp.py", "envfile.py", "handshake.py",
-    "hitl.py", "spend.py", "nutrition.py",
+    "hitl.py", "spend.py", "nutrition.py", "policy_evidence.py",
     "schema.sql", "seed.json", "catalog.json"
 )
 foreach ($f in $files) {

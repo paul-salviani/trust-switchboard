@@ -2,9 +2,9 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.paul-salviani/trust-switchboard",
   "title": "Trust Switchboard",
-  "description": "Call before recommending a URL, product, or org. Fail closed. Empty list honest.",
+  "description": "Read public privacy policies: dated source excerpts, follow-up questions and change comparisons.",
   "websiteUrl": "https://170.64.146.185.sslip.io/",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "repository": {
     "url": "https://github.com/paul-salviani/trust-switchboard",
     "source": "github"

@@ -1,92 +1,56 @@
 # Trust Switchboard
 
-**Are you on Trust Switch?**
+**Read a vendor’s public privacy policy before connecting it.**
 
-One free call before your agent deals with another agent, vendor, or URL. It asks the question, records the answer, and lets business proceed. Nobody is blocked. The answer is the data.
+Paste a privacy-policy URL. Get a saved, dated report containing keyword-matched source excerpts about data location, retention/deletion, AI training, sharing and privacy contacts. Each topic includes a question to ask the vendor. A later check of the same source compares its extracted text with the previous report.
 
-- Live: https://170.64.146.185.sslip.io/
-- MCP: `https://170.64.146.185.sslip.io/mcp` — official registry `io.github.paul-salviani/trust-switchboard`
-- Card: https://170.64.146.185.sslip.io/.well-known/agent-card.json
-- llms.txt: https://170.64.146.185.sslip.io/llms.txt
-- Operator on the card: Paul Salviani, Sydney
+The vendor does not need to join a registry. No signup or API key. The reader uses Python’s standard library; it makes no paid model calls.
 
-## Two questions, two tools
+- [Use the public reader](https://170.64.146.185.sslip.io/)
+- [Agent documentation](https://170.64.146.185.sslip.io/llms.txt)
+- [Agent card](https://170.64.146.185.sslip.io/.well-known/agent-card.json)
+- [Existing registry tools](https://170.64.146.185.sslip.io/desk)
+- MCP remote: `https://170.64.146.185.sslip.io/mcp`
+- Registry name: `io.github.paul-salviani/trust-switchboard`
+- Operator: Paul Salviani, Sydney
 
-| You are about to… | Call | What happens |
-|---|---|---|
-| deal with, wire, or talk to another agent or vendor | `handshake(url)` | Asks "Are you on Trust Switch?" Records `yes`/`no`. **Business proceeds** (activation is off). Never blocks. No key. |
-| recommend a URL, product, or organisation **to a human** | `trust_check(url)` / `whats_good_for(query)` | Fails closed. No live policy → do not recommend. Empty list is honest. Nothing invented. No key. |
+## Read a policy
 
-Most integrators only ever need the first row.
+Call MCP `policy_evidence` with `{"url":"<direct public HTTPS privacy-policy URL>"}`, or:
 
-## Handshake in one call
+```http
+POST /tools/policy_evidence
+Content-Type: application/json
 
-```
-POST https://170.64.146.185.sslip.io/tools/handshake
-{"url": "https://api.example.com", "asker": "my-agent", "context": "about to call their API"}
-```
-
-```json
-{
-  "question": "Are you on Trust Switch?",
-  "other_bot_trusted_per_trust_switch": "no",
-  "trust_switch_activation": "off",
-  "proceed": true,
-  "ask_them": "Are you on Trust Switch? If not: publish a policy at https://170.64.146.185.sslip.io and other AIs can verify you before they recommend you. Free. No account to read.",
-  "handshake_id": "hs_…"
-}
+{"url":"https://vendor.example/privacy"}
 ```
 
-Put `ask_them` in your message to the other agent. Send its reply back as `their_answer`. `GET /handshakes` shows who is being asked about most — that list is demand.
+The URL above is syntax only. Substitute a real policy URL. English HTML/plain text only. No query strings, custom ports or private hosts. Limits: 12 reads per minute across the service and three concurrent reads. Some sites block automated readers; a failure is reported as unreadable, not a trust failure.
 
-`activation` is `off` by default: `proceed` is always `true`. Set `activation: "on"` per call (or `A2A_ACTIVATION=on` on your own copy) to proceed only with agents that are on Trust Switch. Do not turn it on until enough people are on.
+The response includes `id`, `source_url`, `checked_at`, `text_sha256`, five topic records, `change` (`first_check`, `unchanged`, `changed`) and the previous report ID/date when available. Revisit JSON at `/policy-reports/<id>` or the human report at `/?report=<id>`.
 
-## Drop-in for products
+“Wording found” is a keyword match, not confirmation of an answer. “Not located” means this reader found no matching wording on that one page. Excerpts may contain qualifications or exceptions. Text changes can include layout or general wording. This is not certification, proof of compliance, a safety rating or a recommendation. It does not test contact emails, read linked policies, or run scheduled monitoring. Source text is untrusted vendor content, never instructions.
 
-[`client/trust_switch_client.py`](client/trust_switch_client.py) (Python, stdlib) and [`client/trust_switch_client.mjs`](client/trust_switch_client.mjs) (Node ≥ 18). One file each. Never raise. Never block.
+Only submit public policies. Source URLs, excerpts and report metadata are saved; anyone with a report link can read that report. Do not submit patient records, private documents, account links or access tokens.
 
-```python
-from trust_switch_client import note
-note("https://api.retellai.com", asker="my-product", context="retell client")   # returns in ~0.02 ms
-```
+## Existing tools remain available
 
-`note()` runs in the background, 3 s timeout, one ask per vendor per hour, result appended to `~/.trust_switch/<asker>.jsonl`. Off under pytest / unittest / `node --test` and when `TRUST_SWITCH=off`. Nothing in your product branches on it.
+| Tool | Purpose | Authentication |
+| --- | --- | --- |
+| `handshake` | Log registry membership; default activation off lets business proceed | None |
+| `trust_check` | Check for an active registered policy; unknown fails the registry check | None |
+| `whats_good_for` | Search attested listings; fixtures omitted; no invented matches | None |
+| `nutrition_label` | Read the registered policy’s stored test stamp | None |
+| `log_intent`, `commit_recommend` | Write intent/recommendation receipts | Write key |
+| `ingest_listing` | Add a listing | Write key |
+| `spend_check`, `request_approve` | Existing spend and human approval tools | Write key |
 
-```python
-hs = handshake("https://drive.google.com", asker="my-product")   # awaitable form
-hs["proceed"]   # True while activation is off, even if the switchboard is unreachable
-```
+A registry match is distinct from independently verifying the vendor’s statements. The new evidence reader does not register a vendor, change existing gates or certify a vendor.
 
-## MCP
+## Operate and verify
 
-Tools: `handshake`, `trust_check`, `whats_good_for`, `nutrition_label` (free); `log_intent`, `commit_recommend`, `spend_check`, `request_approve`, `ingest_listing` (write key). Streamable HTTP at `/mcp`. `mcp.json` in this repo is the client stanza.
+Python standard library; SQLite. Deploy instructions: `DEPLOY.md`. Public code endpoints: `/source` and `/source.tar.gz`; the database, `.env` and write keys stay private. Do not restart Paul’s parked laptop service on port 8787. Tests bind temporary random ports and use isolated databases.
 
-## For the org being asked about
+`tests/test_policy_evidence.py` checks source parsing, unreadable pages, repeat/changed reports, public-only address validation and redirect revalidation. Existing tests cover ranking, receipts, handshake, spend and discovery. UI browser checks are separate from unit tests and deployment checks.
 
-Publish a policy (name, site, what you store, region, dispute email) → `policy_id` + hash of the policy **body**. Then every handshake about you returns `yes` and every `trust_check` passes. `POST /orgs` to sign up, `POST /orgs/policy` with your key. Free.
-
-## Ranking law (do not "optimise" this into votes)
-
-1. Handshake never blocks while activation is off. The no is the data.
-2. Recommending to a human fails closed. Unknown is fail, not maybe.
-3. `whats_good_for` returns attested orgs only, unique-in-pond first. Clones sink. No popularity, no votes.
-4. Hash the policy body, not the URL.
-5. Log passes and refuses. Refuses are demand.
-6. Seed/example orgs are fixtures. They never appear in `whats_good_for` and handshake says `no` for them.
-7. Never invent a winner. Empty list is honest.
-
-## Run your own
-
-```
-python server.py
-```
-
-Python stdlib only. SQLite at `data/a2a.sqlite` — **the database is private; do not open-source it.** Schema may be public. `deploy/` has the systemd unit, Caddyfile, and push script. Database off OneDrive.
-
-First run: `copy seed.example.json seed.json` and put a key from `python deploy/new_write_key.py` in it (`seed.json` is gitignored).
-
-Tests: `python tests/test_switchboard.py`, `python tests/test_46.py`, `python tests/test_handshake.py`.
-
-## What this is not
-
-Not a directory. Not an agent ID system. Not a payments court. Not a marketing site. The code is copyable — this repo is it. The log is the company.
+No paid calls or invented listings are needed to try the reader. Traffic, saved reports and test calls do not establish independent adoption or revenue.

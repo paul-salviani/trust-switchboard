@@ -20,6 +20,7 @@ import hitl
 import mcp
 import nutrition
 import policy
+import policy_evidence
 import recommend
 import spend
 import tape
@@ -669,10 +670,12 @@ class Handler(BaseHTTPRequestHandler):
         qs = parse_qs(parsed.query)
         root = root_url(self)
 
-        if path in ("/", "/index.html", "/dash", "/dash.html", "/for-agents", "/for-agents.html"):
+        if path in ("/", "/index.html", "/dash", "/dash.html", "/for-agents", "/for-agents.html", "/desk", "/desk.html"):
             name = {
-                "/": "index.html",
-                "/index.html": "index.html",
+                "/": "policy-home.html",
+                "/index.html": "policy-home.html",
+                "/desk": "index.html",
+                "/desk.html": "index.html",
                 "/dash": "dash.html",
                 "/dash.html": "dash.html",
                 "/for-agents": "for-agents.html",
@@ -684,6 +687,15 @@ class Handler(BaseHTTPRequestHandler):
                 return
             html = fp.read_text(encoding="utf-8").replace("{{WRITE_KEY}}", "")
             self._send(200, html, "text/html; charset=utf-8")
+            return
+        if path.startswith("/policy-reports/"):
+            con = connect()
+            try:
+                report_id = path.rsplit("/", 1)[-1]
+                data = policy_evidence.saved_report(con, report_id)
+                self._send(200 if data else 404, data or {"error": "Report not found"})
+            finally:
+                con.close()
             return
         if path in ("/for-agents.txt", "/seed-agents.txt"):
             self._send(200, geo.agent_seed_prompt(root), "text/plain; charset=utf-8")
@@ -867,6 +879,12 @@ class Handler(BaseHTTPRequestHandler):
 
         con = connect()
         try:
+            if path == "/tools/policy_evidence":
+                try:
+                    self._send(200, policy_evidence.report(con, payload.get("url")))
+                except policy_evidence.EvidenceError as e:
+                    self._send(400, {"error": str(e)})
+                return
             if path == "/tools/trust_check":
                 self._send(200, mcp.trust_check(con, payload.get("url") or ""))
                 return
