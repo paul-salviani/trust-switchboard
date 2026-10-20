@@ -1,10 +1,18 @@
 {
   "name": "trust-switchboard",
-  "version": "1.0.0",
-  "description": "Call Trust Switchboard before recommending a URL, product, or organisation. Fail closed. Empty list honest.",
-  "author": { "name": "Paul Salviani" },
+  "version": "1.1.0",
+  "description": "Read public privacy policies: dated source excerpts, vendor follow-up questions and comparisons on later checks. Free, no signup. MCP and HTTP.",
+  "author": {
+    "name": "Paul Salviani"
+  },
   "homepage": "https://170.64.146.185.sslip.io/",
   "repository": "https://github.com/paul-salviani/trust-switchboard",
   "license": "MIT",
-  "keywords": ["mcp", "trust", "recommend", "fail-closed", "agent"]
+  "keywords": [
+    "mcp",
+    "privacy-policy",
+    "data-privacy",
+    "policy-evidence",
+    "agent"
+  ]
 }
