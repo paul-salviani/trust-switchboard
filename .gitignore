@@ -5,6 +5,9 @@ data/
 *.sqlite-wal
 *.sqlite-shm
 __pycache__/
+letta/node_modules/
+.runtime/
+*.private.json
 *.pyc
 .salviani_org_key
 *.org_key

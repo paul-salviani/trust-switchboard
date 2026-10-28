@@ -118,7 +118,7 @@ class EvidenceTests(unittest.TestCase):
                 with urllib.request.urlopen(request) as response:
                     out = json.load(response)
                 self.assertIn('id', out)
-                for path, expected in [('/', b'privacy policy actually'), ('/desk', b'Operator write key')]:
+                for path, expected in [('/policy', b'privacy policy actually'), ('/desk', b'Operator write key'), ('/', b'A home')]:
                     with urllib.request.urlopen(base + path) as response:
                         self.assertIn(expected, response.read())
             finally:

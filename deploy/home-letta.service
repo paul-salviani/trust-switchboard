@@ -1,0 +1,25 @@
+[Unit]
+Description=Switchboard private Letta memory service
+After=network.target
+
+[Service]
+Type=simple
+User=a2a
+Group=a2a
+WorkingDirectory=/var/lib/a2a/letta
+Environment=HOME=/var/lib/a2a/letta
+Environment=PATH=/opt/a2a/runtime/node-v24.22.1-linux-x64/bin:/usr/local/bin:/usr/bin:/bin
+Environment=LETTA_CODE_DISABLE_TELEMETRY=1
+ExecStart=/opt/a2a/runtime/node-v24.22.1-linux-x64/bin/node /opt/a2a/letta/node_modules/@letta-ai/letta-code/letta.js server --backend local --listen ws://127.0.0.1:4500 --ws-auth capability-token --ws-token-file /var/lib/a2a/letta/ws-token
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/a2a/letta
+UMask=0077
+MemoryMax=384M
+
+[Install]
+WantedBy=multi-user.target

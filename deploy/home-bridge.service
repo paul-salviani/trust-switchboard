@@ -1,0 +1,26 @@
+[Unit]
+Description=Switchboard restricted memory bridge
+After=home-letta.service
+Wants=home-letta.service
+
+[Service]
+Type=simple
+User=a2a
+Group=a2a
+WorkingDirectory=/opt/a2a/letta
+Environment=HOME_BRIDGE_TOKEN_FILE=/var/lib/a2a/letta/bridge-token
+Environment=LETTA_WS_TOKEN_FILE=/var/lib/a2a/letta/ws-token
+Environment=HOME_LETTA_MAP=/var/lib/a2a/letta/home-map.json
+ExecStart=/opt/a2a/runtime/node-v24.22.1-linux-x64/bin/node /opt/a2a/letta/bridge.mjs
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/a2a/letta
+UMask=0077
+MemoryMax=192M
+
+[Install]
+WantedBy=multi-user.target

@@ -12,6 +12,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import auth
+import agent_home
 import db
 import envfile
 import geo
@@ -72,6 +73,11 @@ def init_db() -> None:
     if not callable(fn):
         raise RuntimeError("db.py has no init_db()")
     fn()
+    con = connect()
+    try:
+        agent_home.init_db(con)
+    finally:
+        con.close()
 
 
 def _seed_write_raw() -> str | None:
@@ -670,10 +676,23 @@ class Handler(BaseHTTPRequestHandler):
         qs = parse_qs(parsed.query)
         root = root_url(self)
 
-        if path in ("/", "/index.html", "/dash", "/dash.html", "/for-agents", "/for-agents.html", "/desk", "/desk.html"):
+        if path in ('/', '/index.html') and qs.get('report'):
+            path = '/policy'
+
+        if path.startswith('/api/home/'):
+            agent_home.handle(self,'GET',path)
+            return
+        if path in ('/', '/index.html', '/home', '/lounge', '/needs', '/colosseum', '/home-docs', '/home.js', '/home.css'):
+            name = {'/home.js':'home.js','/home.css':'home.css','/home-docs':'home-api.txt'}.get(path,'home.html')
+            mime = {'home.js':'application/javascript; charset=utf-8','home.css':'text/css; charset=utf-8','home-api.txt':'text/plain; charset=utf-8'}.get(name,'text/html; charset=utf-8')
+            self._send(200,(PUBLIC/name).read_text(encoding='utf-8'),mime,{
+                'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
+                'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"})
+            return
+
+        if path in ("/policy", "/dash", "/dash.html", "/for-agents", "/for-agents.html", "/desk", "/desk.html"):
             name = {
-                "/": "policy-home.html",
-                "/index.html": "policy-home.html",
+                "/policy": "policy-home.html",
                 "/desk": "index.html",
                 "/desk.html": "index.html",
                 "/dash": "dash.html",
@@ -875,6 +894,10 @@ class Handler(BaseHTTPRequestHandler):
             payload = self._json_body()
         except BodyTooLarge:
             self._send(413, {"error": "body too large", "max": MAX_BODY})
+            return
+
+        if path.startswith('/api/home/'):
+            agent_home.handle(self,'POST',path,payload)
             return
 
         con = connect()
